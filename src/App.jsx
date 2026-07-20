@@ -386,7 +386,15 @@ export default function App() {
           </div>
           {ajuda && <Ajuda onClose={() => setAjuda(false)} />}
           <p style={{ color: "#4A5C52", fontSize: 10, marginTop: 34 }}>
-            simulação educacional · dinheiro fictício · fuzzionx.com
+            simulação educacional · dinheiro fictício · fuzzionx.com ·{" "}
+            <a
+              href="https://github.com/FuzzionX545/spread"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#4A5C52" }}
+            >
+              código
+            </a>
           </p>
         </div>
       </Frame>

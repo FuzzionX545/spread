@@ -76,7 +76,6 @@ Simulação **educacional** com dinheiro fictício e números simplificados. Nã
 **João Victor Silveira** — fundador da [FuzzionX](https://fuzzionx.com). Estudo o mercado financeiro e construo software de ponta a ponta (React, AWS serverless, automação com IA).
 
 - 💼 [LinkedIn](https://www.linkedin.com/in/joaovsilveira)
-- 🤖 [Converse com minha versão de IA no WhatsApp](https://fuzzionx.com/ia)
 - 📫 hello@fuzzionx.com
 
 *Se o jogo te ensinou algo, deixa uma ⭐ no repositório!*

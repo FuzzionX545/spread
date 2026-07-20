@@ -53,16 +53,19 @@ Curiosidade: o risco de calote do jogo é propositalmente **maior** que o real (
 ### Rodar localmente
 
 ```bash
-npm create vite@latest spread -- --template react
+git clone https://github.com/FuzzionX545/spread.git
 cd spread
-# substitua src/App.jsx pelo App.jsx deste repositório
-npm install && npm run dev
+npm install
+npm run dev
 ```
+
+O jogo abre no navegador (endereço local exibido no terminal). Para gerar a versão de produção: `npm run build`.
 
 ## 🗺️ Roadmap
 
 - [ ] Ranking de notas compartilhável
 - [ ] Modo infinito para quem zerar
+- [ ] Novas mecânicas e eventos de mercado
 
 ## ⚠️ Aviso
 

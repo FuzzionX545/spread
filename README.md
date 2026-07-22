@@ -1,6 +1,6 @@
 # SPREAD_ 💸
 
-**O jogo do crédito** — sobreviva 12 meses gerindo um fundo de crédito sem quebrar.
+**Simulador do mercado de crédito** — sobreviva 12 meses no comando do seu próprio banco.
 
 🎮 **[Jogue agora no navegador → fuzzionx.com/jogo](https://fuzzionx.com/jogo)** · grátis, sem cadastro, ~3 minutos
 

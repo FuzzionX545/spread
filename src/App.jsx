@@ -63,15 +63,21 @@ const SFX = {
   win: () => [523, 659, 784, 1047].forEach((f, i) => tom(f, 0.18, "sine", 0.13, i * 0.13)),
   lose: () => [392, 330, 262, 196].forEach((f, i) => tom(f, 0.2, "sine", 0.13, i * 0.15)),
 };
+// a trilha original, incrementada: baixo, harmonia e um ciclo 2x mais longo antes de repetir
+const NOTAS = [
+  220, 261.6, 329.6, 392, 329.6, 261.6, 246.9, 293.7,   // parte A (a melodia original)
+  220, 261.6, 329.6, 440, 392, 329.6, 293.7, 246.9,     // parte B (variação que sobe mais)
+];
 function musica(ligar) {
   if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
   if (!ligar || !somLigado) return;
-  // pad ambiente: notas longas sobrepostas (sem pulso de "batimento")
-  const notas = [220, 261.6, 329.6, 392, 329.6, 261.6, 246.9, 293.7];
   let i = 0;
   musicTimer = setInterval(() => {
-    tom(notas[i % notas.length], 1.9, "triangle", 0.07);
-    if (i % 4 === 0) tom(notas[i % notas.length] * 2, 1.3, "sine", 0.028);
+    const n = NOTAS[i % NOTAS.length];
+    tom(n, 1.9, "triangle", 0.07);                          // pad principal (o de sempre)
+    if (i % 2 === 0) tom(n / 2, 2.6, "sine", 0.05);         // baixo acompanhando por baixo
+    if (i % 4 === 0) tom(n * 2, 1.3, "sine", 0.028);        // brilho uma oitava acima
+    if (i % 8 === 4) tom(n * 1.5, 1.7, "triangle", 0.032);  // harmonia que entra de vez em quando
     i++;
   }, 880);
 }
@@ -98,8 +104,11 @@ function sorteiaMercado() {
   return { rot: "🥶 comprador sumido", adj: 0.07 };
 }
 
-// 4 a 6 clientes por mês — na vida real a fila é maior que o caixa
-const novosPedidos = () => Array.from({ length: 4 + Math.floor(Math.random() * 3) }, novoPedido);
+// demanda com sazonalidade real: fim de ano aquece (Natal/13º), começo de ano ainda agitado (IPVA, escola)
+function novosPedidos(mes = 1) {
+  const sazonal = mes >= 11 ? 2 : mes <= 2 ? 1 : 0;
+  return Array.from({ length: Math.min(7, 3 + sazonal + Math.floor(Math.random() * 3)) }, novoPedido);
+}
 
 const INICIO = (modo = null) => ({
   tela: modo ? "jogo" : "intro",
@@ -132,6 +141,19 @@ export default function App() {
   const [ajuda, setAjuda] = useState(false);
   const [som, setSom] = useState(true);
   const [qtd, setQtd] = useState(3); // tokens selecionados pra vender
+  const [copiei, setCopiei] = useState(false);
+
+  function reiniciar(modo = null) {
+    setQtd(3); // seletor de tokens volta ao padrão a cada partida
+    setCopiei(false);
+    setG(INICIO(modo));
+  }
+
+  useEffect(() => {
+    // seletor de tokens se ajusta ao mercado do mês (não "lembra" escolhas antigas do nada)
+    setQtd((q) => Math.max(1, Math.min(q, maxTok)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.mes]);
 
   useEffect(() => {
     const aoOcultar = () => { if (document.hidden) musica(false); };
@@ -240,6 +262,31 @@ export default function App() {
     setG((s) => ({ ...s, fim: "out", tela: "fim" }));
   }
 
+  const textoNota = () =>
+    `Tirei ${nota}/99 no Spread_ 💸 simulador do mercado de crédito.\nSobreviva 12 meses no comando do seu próprio banco: https://fuzzionx.com/spread`;
+
+  async function copiarNota() {
+    SFX.clique();
+    try {
+      await navigator.clipboard.writeText(textoNota());
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = textoNota();
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopiei(true);
+    setTimeout(() => setCopiei(false), 2500);
+  }
+
+  function compartilharNota() {
+    SFX.clique();
+    if (navigator.share) navigator.share({ text: textoNota() }).catch(() => {});
+    else copiarNota();
+  }
+
   function rodarMes() {
     SFX.mes();
     setG((s) => {
@@ -326,7 +373,7 @@ export default function App() {
       return {
         ...s, caixa, senior, perdas, onda, stress, selic, fim,
         carteira: sobrev, mes: Math.min(mes, MESES + 1),
-        pedidos: novosPedidos(), idx: 0,
+        pedidos: novosPedidos(mes), idx: 0,
         vendeuMes: false, mercado: sorteiaMercado(),
         tela: "resolvendo", fila, filaIdx: 0,
         fala: "Vamos ver como foi o mês… 🤞",
@@ -375,14 +422,14 @@ export default function App() {
             SPREAD<span style={{ color: C.green }}>_</span>
           </h1>
           <div style={{ color: C.green, fontSize: 12, letterSpacing: 3, fontFamily: "ui-monospace, monospace", marginBottom: 6 }}>
-            O JOGO DO CRÉDITO
+            SIMULADOR DO MERCADO DE CRÉDITO
           </div>
           <div style={{ color: C.mute, fontSize: 14, marginBottom: 40 }}>
             você aguenta {MESES} meses?
           </div>
 
           <div>
-            <button onClick={() => { SFX.clique(); musica(true); setG(INICIO("fundo")); }} style={{ ...btnJogar, marginTop: 0, fontSize: 18, padding: "16px 64px" }}>
+            <button onClick={() => { SFX.clique(); musica(true); reiniciar("fundo"); }} style={{ ...btnJogar, marginTop: 0, fontSize: 18, padding: "16px 64px" }}>
               ▶ JOGAR
             </button>
           </div>
@@ -413,7 +460,7 @@ export default function App() {
     const c = g.fila[g.filaIdx] || { emoji: "😴", titulo: "Mês tranquilo", sub: "nada aconteceu", delta: 0, cor: C.mute };
     return (
       <Frame css={css}>
-        <Topo g={g} cofre={cofre} vida={vida} onAjuda={() => setAjuda(true)} onReset={() => setG(INICIO())} som={som} onSom={alternarSom} />
+        <Topo g={g} cofre={cofre} vida={vida} onAjuda={() => setAjuda(true)} onReset={() => reiniciar()} som={som} onSom={alternarSom} />
         {ajuda && <Ajuda onClose={() => setAjuda(false)} />}
         <div onClick={proximaCarta} className={c.shake ? "shake" : "pop"} key={g.filaIdx}
           style={{ ...cardResultado, cursor: "pointer", borderColor: c.cor }}>
@@ -465,7 +512,21 @@ export default function App() {
               <Res emoji="💥" k="Perdido em calote" v={fmt(g.perdas)} />
             </div>
           </div>
-          <button style={btnJogar} onClick={() => setG(INICIO())}>↻ JOGAR DE NOVO</button>
+          <button style={btnJogar} onClick={() => reiniciar()}>↻ JOGAR DE NOVO</button>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 12 }}>
+            <button onClick={compartilharNota} style={{
+              padding: "11px 22px", borderRadius: 12, cursor: "pointer",
+              background: "none", border: `1px solid ${C.green}`, color: C.green, fontWeight: 800, fontSize: 14,
+            }}>
+              📤 compartilhar
+            </button>
+            <button onClick={copiarNota} style={{
+              padding: "11px 22px", borderRadius: 12, cursor: "pointer",
+              background: "none", border: `1px solid ${C.line}`, color: C.mute, fontWeight: 800, fontSize: 14,
+            }}>
+              {copiei ? "✅ copiado!" : "📋 copiar nota"}
+            </button>
+          </div>
           <p style={{ color: C.mute, fontSize: 12, marginTop: 16 }}>Manda sua nota pra galera 😏 · fuzzionx.com</p>
         </div>
       </Frame>
@@ -475,7 +536,7 @@ export default function App() {
   /* ============ JOGO ============ */
   return (
     <Frame css={css}>
-      <Topo g={g} cofre={cofre} vida={vida} onAjuda={() => setAjuda(true)} onReset={() => setG(INICIO())} som={som} onSom={alternarSom} />
+      <Topo g={g} cofre={cofre} vida={vida} onAjuda={() => setAjuda(true)} onReset={() => reiniciar()} som={som} onSom={alternarSom} />
       {ajuda && <Ajuda onClose={() => setAjuda(false)} />}
 
       <div style={{ display: "flex", alignItems: "flex-end", gap: 8, margin: "10px 0 6px" }}>

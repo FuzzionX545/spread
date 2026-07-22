@@ -2,7 +2,7 @@
 
 **Simulador do mercado de crédito** — sobreviva 12 meses no comando do seu próprio banco.
 
-🎮 **[Jogue agora no navegador → fuzzionx.com/jogo](https://fuzzionx.com/jogo)** · grátis, sem cadastro, ~3 minutos
+🎮 **[Jogue agora no navegador → fuzzionx.com/spread](https://fuzzionx.com/spread)** · grátis, sem cadastro, ~3 minutos
 
 ![status](https://img.shields.io/badge/status-no%20ar-4ADE80) ![stack](https://img.shields.io/badge/stack-React%20%2B%20AWS-0A0F0D)
 

@@ -93,10 +93,13 @@ function novoPedido() {
 
 function sorteiaMercado() {
   const r = Math.random();
-  if (r < 0.3) return { rot: "🔥 comprador animado", adj: -0.02 };
+  if (r < 0.3) return { rot: "🔥 comprador animado", adj: -0.03 };
   if (r < 0.75) return { rot: "😐 mercado normal", adj: 0 };
-  return { rot: "🥶 comprador sumido", adj: 0.03 };
+  return { rot: "🥶 comprador sumido", adj: 0.07 };
 }
+
+// 4 a 6 clientes por mês — na vida real a fila é maior que o caixa
+const novosPedidos = () => Array.from({ length: 4 + Math.floor(Math.random() * 3) }, novoPedido);
 
 const INICIO = (modo = null) => ({
   tela: modo ? "jogo" : "intro",
@@ -106,7 +109,7 @@ const INICIO = (modo = null) => ({
   senior: 80000,
   cofre0: 20000,
   carteira: [],
-  pedidos: [novoPedido(), novoPedido(), novoPedido()],
+  pedidos: novosPedidos(),
   idx: 0,
   vendeuMes: false,
   mercado: sorteiaMercado(),
@@ -121,6 +124,8 @@ const INICIO = (modo = null) => ({
 
 const devido = (l) => l.parcela * l.restantes;
 const meu = (l) => devido(l) * (1 - (l.vendido || 0));
+// patrimônio de verdade: só o principal emprestado — juros contam quando a parcela cai
+const principal = (l) => (l.valor / l.prazo) * l.restantes * (1 - (l.vendido || 0));
 
 export default function App() {
   const [g, setG] = useState(() => INICIO());
@@ -147,15 +152,17 @@ export default function App() {
   }
 
   const saldoCarteira = g.carteira.reduce((s, l) => s + meu(l), 0);
-  const cofre = g.caixa + saldoCarteira - g.senior;
+  const saldoPrincipal = g.carteira.reduce((s, l) => s + principal(l), 0);
+  const cofre = g.caixa + saldoPrincipal - g.senior;
   const vida = Math.max(0, Math.min(1, cofre / g.cofre0));
-  const scoreMedio = g.carteira.length
-    ? g.carteira.reduce((s, l) => s + l.score, 0) / g.carteira.length : 3;
   // tokenização RWA: carteira dividida em 10 tokens
   const maxTok = g.mercado.adj < 0 ? 10 : g.mercado.adj === 0 ? 6 : 3; // 🔥 até 10 · 😐 até 6 · 🥶 até 3
   const qtdOk = Math.max(1, Math.min(qtd, maxTok));
-  const descBase = Math.max(0.04, 0.13 - scoreMedio * 0.012 + g.mercado.adj);
-  const descTok = (q) => descBase + (q / 10) * 0.06; // quanto maior o lote, maior o desconto
+  // comprador esperto: o deságio cobre a perda esperada por calote + margem dele + humor do mercado + lote
+  const riscoMedio = saldoCarteira ? g.carteira.reduce((s, l) => s + RISCO[l.score] * meu(l), 0) / saldoCarteira : 0;
+  const prazoMedio = saldoCarteira ? g.carteira.reduce((s, l) => s + l.restantes * meu(l), 0) / saldoCarteira : 0;
+  const perdaEsperada = (1 - Math.pow(1 - riscoMedio, prazoMedio * 0.55)) * 0.9;
+  const descTok = (q) => Math.min(0.5, 0.03 + perdaEsperada + g.mercado.adj + (q / 10) * 0.05);
   const p = g.pedidos[g.idx];
   const acabou = g.idx >= g.pedidos.length;
   const semCaixa = p && g.caixa < p.valor;
@@ -264,7 +271,7 @@ export default function App() {
         const rEf = RISCO[l.score] * mult *
           (l.taxa > TAXA[l.score] + 0.005 ? 1.35 : l.taxa < TAXA[l.score] - 0.004 ? 0.85 : 1);
         if (Math.random() < rEf) {
-          const perda = meu(l);
+          const perda = principal(l); // você perde o que emprestou e não voltou (juros futuros eram só promessa)
           perdas += perda;
           fila.push({ emoji: "💥", titulo: "CALOTE!", sub: `${l.emoji} ${l.nome} sumiu — sua parte da perda`, delta: -perda, cor: C.red, shake: true });
         } else {
@@ -277,11 +284,11 @@ export default function App() {
       caixa += recebido;
 
       // investidores do fundo / banco
-      const custo = senior * (selic / 12 + 0.004);
+      const custo = senior * (selic / 12 + 0.003);
       senior += custo;
 
       // custo operacional fixo (equipe, sistema, cobrança)
-      const OPEX = 800;
+      const OPEX = 600;
       caixa -= OPEX;
 
       // carta-resumo única do fechamento
@@ -309,7 +316,7 @@ export default function App() {
         else fila.push({ emoji: "🚨", titulo: "Quer sacar e não tem caixa!", sub: "venda a carteira JÁ", delta: 0, cor: C.red, shake: true });
       }
 
-      const novoSaldo = sobrev.reduce((t, l) => t + meu(l), 0);
+      const novoSaldo = sobrev.reduce((t, l) => t + principal(l), 0);
       const novoCofre = caixa + novoSaldo - senior;
       const mes = s.mes + 1;
       let fim = null;
@@ -319,7 +326,7 @@ export default function App() {
       return {
         ...s, caixa, senior, perdas, onda, stress, selic, fim,
         carteira: sobrev, mes: Math.min(mes, MESES + 1),
-        pedidos: [novoPedido(), novoPedido(), novoPedido()], idx: 0,
+        pedidos: novosPedidos(), idx: 0,
         vendeuMes: false, mercado: sorteiaMercado(),
         tela: "resolvendo", fila, filaIdx: 0,
         fala: "Vamos ver como foi o mês… 🤞",

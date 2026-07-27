@@ -530,7 +530,7 @@ export default function App() {
   }
 
   const textoNota = () =>
-    `Tirei ${nota}/99 no Spread_ 💸 simulador do mercado de crédito (${M.icone} ${M.nome} · ${F.rot}).\nSobreviva 12 meses no comando do seu próprio banco: https://fuzzionx.com/spread`;
+    `Tirei ${nota}/99 no Spread_ 💸 simulador do mercado de crédito (mercado ${M.icone} ${M.nome}).\nSobreviva 12 meses no comando do seu próprio banco: https://fuzzionx.com/spread`;
 
   async function copiarNota() {
     SFX.clique();

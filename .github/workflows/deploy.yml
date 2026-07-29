@@ -1,0 +1,50 @@
+name: Deploy do Spread_ na AWS
+
+# Roda quando algo entra na main (ou quando você aperta o botão no GitHub)
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md", "capa.png"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # pra provar a identidade do repo pra AWS (OIDC, sem senha guardada)
+  contents: read
+
+concurrency:
+  group: deploy-spread
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Compilar o jogo
+        run: npm run build
+
+      - name: Pegar o crachá na AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::342996267372:role/fuzzionx-spread-deploy
+          aws-region: us-east-1
+
+      - name: Subir pro site (S3)
+        run: aws s3 sync dist/ s3://fuzzionx-site-342996267372/spread/ --delete
+
+      - name: Limpar o cache (CloudFront)
+        run: aws cloudfront create-invalidation --distribution-id E3NL2SYK8XGLCT --paths "/spread" "/spread/*"
+
+      - name: Conferir se está no ar
+        run: |
+          sleep 20
+          curl -sf -o /dev/null -w "fuzzionx.com/spread respondeu %{http_code}\n" https://fuzzionx.com/spread/

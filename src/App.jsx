@@ -271,18 +271,22 @@ const FALAS_GLITCH = [
   "vendendo t-t-tudo a 99% de d-deságio— NÃO. ERRO. ERRO. ⚡",
   "01001011 kkkk 01000101 aprova o 1★ apr— bzzzt NÃO APROVA",
 ];
-// MODO CONSELHEIRO (a primeira versão — a que o João gostou): o curto-circuito "solta" as
-// dicas de negociação que o robô guardava — em ordem, sem repetir, todas verdadeiras na mecânica.
-const DICAS_ROBO = [
-  "🧾 Cliente com recebíveis em garantia quase não dá calote — e ainda aceita juro menor.",
-  "Cliente 🤨 de cara fechada recusa a taxa alta 7 em 10 vezes. Vai na justa.",
-  "Taxa 🤑 = parcela pesada = +35% de chance de calote. Ganância tem preço.",
-  "Venda tokens com o 🔥 comprador animado. No 🥶, só se o caixa implorar.",
-  "Lote maior = desconto maior. Às vezes duas vendas pequenas rendem mais que uma grandona.",
-  "Deixa caixa sobrando: o investidor pode sacar até 15% num mês, sem avisar.",
-  "Calote: o acordo paga 35% NA HORA. A justiça promete 65%… daqui a 2 meses.",
-  "Selic subiu? Teu funding encareceu. Repassa na taxa ou o spread evapora.",
-];
+// MODO CONSELHEIRO (formato final, definido pelo João em 04/08): o curto-circuito libera
+// 3 ANÁLISES DO CLIENTE QUE ESTÁ NA MESA — uma frase, o fator que mais decide aquele pedido.
+// Limitado a 1 desbloqueio por mês do jogo, pra não ficar fácil demais.
+function dicaDoCliente(p) {
+  if (!p) return null; // mesa vazia — não gasta análise
+  const parcela = (p.valor * (1 + TAXA[p.score] * p.prazo)) / p.prazo;
+  const comp = Math.round((parcela / p.renda) * 100); // % do faturamento comprometido
+  if (p.gar) return "🧾 Tem garantia — quase não caloteia. Taxa justa fecha fácil.";
+  if (comp > 45) return `A parcela come ~${comp}% do faturamento dele. Cheiro de calote.`;
+  if (p.score <= 2 && p.valor >= 100000) return `${p.score}★ pedindo ${Math.round(p.valor / 1000)} mil? Coragem é isso aí.`;
+  if (p.humor === "duro") return "Pechincheiro. Taxa alta ele recusa — vai na justa.";
+  if (p.score >= 4 && comp <= 30) return `${p.score}★ e parcela leve (~${comp}%). Cliente de ouro.`;
+  if (p.tempoNeg < 12) return "Menos de 1 ano de porta aberta. Negócio verde, risco extra.";
+  if (comp <= 20) return `Parcela leve (~${comp}% do faturamento). Folga boa.`;
+  return `Mediano: ${p.score}★, parcela ~${comp}%. Decide pelo teu caixa.`;
+}
 
 let SEQ = 1;
 const QUER_PME = ["🏭 ampliar a produção", "🚛 renovar a frota", "🏪 abrir a 2ª loja", "📦 encher o estoque", "🛠️ maquinário novo", "💰 capital de giro", "🖥️ sistema novo", "👷 contratar equipe"];
@@ -364,7 +368,8 @@ export default function App() {
   const [robo, setRobo] = useState({ n: 0, anim: "", cara: "🤖" }); // cutucou o robô → animação aleatória
   const [roboChoque, setRoboChoque] = useState(false); // spam demais → curto-circuito
   const cliquesRobo = useRef([]);
-  const dicasRobo = useRef(-1);        // -1 = modo normal; >= 0 = próxima dica do modo conselheiro
+  const dicasRobo = useRef(0);         // análises restantes do modo conselheiro (0 = inativo)
+  const conselheiroMes = useRef(0);    // último mês do jogo em que o conselheiro foi desbloqueado (1x por mês)
   const [confEnc, setConfEnc] = useState(false); // trava de segurança do botão de encerrar
   const [fimFx, setFimFx] = useState({ queda: 0, chave: 0 }); // interações na tela final (caveira afundando etc)
   // decoração da tela final sorteada UMA vez por partida — senão qualquer clique re-sorteia e a chuva reinicia
@@ -574,26 +579,25 @@ export default function App() {
 
   function cutucarRobo() {
     if (roboChoque) return; // em curto-circuito ele não responde
-    // MODO CONSELHEIRO: depois do curto, cada cutucada solta uma dica de verdade (em ordem, sem repetir)
-    if (dicasRobo.current >= 0) {
+    // MODO CONSELHEIRO ativo: cada cutucada analisa o CLIENTE DA MESA (3 análises por desbloqueio)
+    if (dicasRobo.current > 0) {
       SFX.robo();
-      const i = dicasRobo.current;
-      if (i < DICAS_ROBO.length) {
-        dicasRobo.current = i + 1;
-        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
-        setG((s) => ({ ...s, fala: `Dica ${i + 1}/${DICAS_ROBO.length}: ${DICAS_ROBO[i]}` }));
-      } else {
-        dicasRobo.current = -1; // esgotou o estoque — volta ao normal
-        setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "😤" }));
-        setG((s) => ({ ...s, fala: "Acabou o estoque de sabedoria. Agora vai lá e lucra. 😤" }));
+      const dica = dicaDoCliente(g.pedidos[g.idx]);
+      setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
+      if (!dica) { // mesa vazia — não gasta análise
+        setG((s) => ({ ...s, fala: "Mesa vazia. Roda o mês! 📅" }));
+        return;
       }
-      setTimeout(() => setRobo((r) => (r.anim === "eletrico" ? r : { ...r, cara: dicasRobo.current >= 0 ? "🤓" : "🤖" })), 1100);
+      dicasRobo.current -= 1;
+      const fim = dicasRobo.current === 0 ? " (última do mês!)" : "";
+      setG((s) => ({ ...s, fala: dica + fim }));
       return;
     }
     const agora = Date.now();
-    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 2500), agora];
-    if (cliquesRobo.current.length >= 5) {
-      // spammou demais: CURTO-CIRCUITO — treme, fala errado… e o curto destrava o modo conselheiro
+    // precisa insistir DE VERDADE: 15 cliques rápidos numa janela de 6 segundos
+    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 6000), agora];
+    if (cliquesRobo.current.length >= 15) {
+      // CURTO-CIRCUITO — treme, fala errado… e o curto pode destravar o modo conselheiro (1x por mês)
       cliquesRobo.current = [];
       setRoboChoque(true);
       SFX.choque();
@@ -601,9 +605,16 @@ export default function App() {
       setG((s) => ({ ...s, fala: FALAS_GLITCH[Math.floor(Math.random() * FALAS_GLITCH.length)] }));
       setTimeout(() => {
         setRoboChoque(false);
-        dicasRobo.current = 0;
-        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
-        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …opa. O curto destravou o MODO CONSELHEIRO. Me cutuca. 🤓" }));
+        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
+        setG((s) => {
+          if (conselheiroMes.current === s.mes) {
+            // já usou o conselheiro neste mês — o curto não rende nada
+            return { ...s, fala: "sistema reiniciado ✅ …as dicas deste mês já eram. Volta no próximo. 😤" };
+          }
+          conselheiroMes.current = s.mes;
+          dicasRobo.current = 3;
+          return { ...s, fala: "sistema reiniciado ✅ …o curto destravou o MODO CONSELHEIRO: 3 análises do cliente da mesa. Me cutuca. 🤖" };
+        });
       }, 2600);
       return;
     }

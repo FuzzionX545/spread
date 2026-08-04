@@ -65,34 +65,48 @@ function orgao(freq, dur, delay = 0, vol = 0.15) {
   if (!somLigado) return;
   try {
     const a = actx(); if (!a) return;
-    const t = a.currentTime + delay;
-    [[freq, vol], [freq * 2, vol * 0.22], [freq / 2, vol * 0.45], [freq * 1.004, vol * 0.35]].forEach(([f, v]) => {
-      const o = a.createOscillator(), g = a.createGain();
-      o.type = "triangle"; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(v, t + 0.05);        // respira ao entrar
-      g.gain.setValueAtTime(v, t + Math.max(0.06, dur * 0.78)); // SEGURA a nota (o segredo)
-      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      o.connect(g); g.connect(a.destination);
-      o.start(t); o.stop(t + dur + 0.05);
-    });
+    const toca = () => {
+      const t = a.currentTime + delay;
+      [[freq, vol], [freq * 2, vol * 0.22], [freq / 2, vol * 0.45], [freq * 1.004, vol * 0.35]].forEach(([f, v]) => {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = "triangle"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(v, t + 0.05);        // respira ao entrar
+        g.gain.setValueAtTime(v, t + Math.max(0.06, dur * 0.78)); // SEGURA a nota (o segredo)
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + dur + 0.05);
+      });
+    };
+    if (a.state === "suspended") a.resume().then(toca).catch(() => {});
+    else toca();
   } catch (e) {}
 }
 function tom(freq, dur = 0.12, type = "sine", vol = 0.14, delay = 0) {
   if (!somLigado) return;
   try {
     const a = actx(); if (!a) return;
-    const o = a.createOscillator(), g = a.createGain();
-    o.type = type; o.frequency.value = freq;
-    const t = a.currentTime + delay;
-    g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    o.connect(g); g.connect(a.destination);
-    o.start(t); o.stop(t + dur + 0.02);
+    const toca = () => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.value = freq;
+      const t = a.currentTime + delay;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g); g.connect(a.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    };
+    // o navegador entrega o contexto SUSPENSO até o 1º gesto — sem isso as primeiras notas eram engolidas (o bug do "clica 3x pra tocar")
+    if (a.state === "suspended") a.resume().then(toca).catch(() => {});
+    else toca();
   } catch (e) {}
 }
 const SFX = {
   clique: () => tom(520, 0.06, "square", 0.07),
+  partida: () => { // apito de largada: três toques subindo + o "VALENDO!"
+    [523, 659, 784].forEach((f, i) => tom(f, 0.09, "square", 0.1, i * 0.12));
+    tom(1047, 0.55, "triangle", 0.13, 0.42);
+    [523, 659, 784].forEach((f) => tom(f, 0.55, "sine", 0.05, 0.42));
+  },
   aprova: () => { tom(660, 0.09); tom(990, 0.12, "sine", 0.12, 0.08); },
   rejeita: () => tom(200, 0.12, "square", 0.1),
   recusa: () => { tom(330, 0.1); tom(220, 0.14, "sine", 0.12, 0.09); },
@@ -252,6 +266,17 @@ const FALAS_GLITCH = [
   "vendendo t-t-tudo a 99% de d-deságio— NÃO. ERRO. ERRO. ⚡",
   "01001011 kkkk 01000101 aprova o 1★ apr— bzzzt NÃO APROVA",
 ];
+// o curto-circuito "solta" as dicas de negociação que ele guardava — todas verdadeiras na mecânica do jogo
+const DICAS_ROBO = [
+  "🧾 Cliente com recebíveis em garantia quase não dá calote — e ainda aceita juro menor.",
+  "Cliente 🤨 de cara fechada recusa a taxa alta 7 em 10 vezes. Vai na justa.",
+  "Taxa 🤑 = parcela pesada = +35% de chance de calote. Ganância tem preço.",
+  "Venda tokens com o 🔥 comprador animado. No 🥶, só se o caixa implorar.",
+  "Lote maior = desconto maior. Às vezes duas vendas pequenas rendem mais que uma grandona.",
+  "Deixa caixa sobrando: o investidor pode sacar até 15% num mês, sem avisar.",
+  "Calote: o acordo paga 35% NA HORA. A justiça promete 65%… daqui a 2 meses.",
+  "Selic subiu? Teu funding encareceu. Repassa na taxa ou o spread evapora.",
+];
 
 let SEQ = 1;
 const QUER_PME = ["🏭 ampliar a produção", "🚛 renovar a frota", "🏪 abrir a 2ª loja", "📦 encher o estoque", "🛠️ maquinário novo", "💰 capital de giro", "🖥️ sistema novo", "👷 contratar equipe"];
@@ -333,6 +358,8 @@ export default function App() {
   const [robo, setRobo] = useState({ n: 0, anim: "", cara: "🤖" }); // cutucou o robô → animação aleatória
   const [roboChoque, setRoboChoque] = useState(false); // spam demais → curto-circuito
   const cliquesRobo = useRef([]);
+  const dicasRobo = useRef(-1); // -1 = modo normal; >= 0 = próximo índice do modo conselheiro
+  const [confEnc, setConfEnc] = useState(false); // trava de segurança do botão de encerrar
   const [fimFx, setFimFx] = useState({ queda: 0, chave: 0 }); // interações na tela final (caveira afundando etc)
   // decoração da tela final sorteada UMA vez por partida — senão qualquer clique re-sorteia e a chuva reinicia
   const fimDecor = useMemo(() => ({
@@ -397,12 +424,31 @@ export default function App() {
     };
   }, []);
 
+  // música já na ABERTURA: o navegador só libera áudio depois de um gesto do usuário,
+  // então o 1º toque/tecla em qualquer lugar destrava o contexto e solta a trilha na intro
+  const telaRef = useRef(g.tela);
+  telaRef.current = g.tela;
+  useEffect(() => {
+    const unlock = () => {
+      try { const a = actx(); if (a && a.state === "suspended") a.resume(); } catch (e) {}
+      if (telaRef.current === "intro") musica(true);
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
   function alternarSom() {
     const novo = !som;
     setSom(novo);
     somLigado = novo;
     if (!novo) musica(false);
-    else if (g.tela !== "intro") musica(true);
+    else musica(true); // agora a trilha toca na intro também
   }
 
   const saldoCarteira = g.carteira.reduce((s, l) => s + meu(l), 0);
@@ -503,10 +549,26 @@ export default function App() {
 
   function cutucarRobo() {
     if (roboChoque) return; // em curto-circuito ele não responde
+    // MODO CONSELHEIRO: depois do curto, cada cutucada solta uma dica de verdade (em ordem, sem repetir)
+    if (dicasRobo.current >= 0) {
+      SFX.robo();
+      const i = dicasRobo.current;
+      if (i < DICAS_ROBO.length) {
+        dicasRobo.current = i + 1;
+        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
+        setG((s) => ({ ...s, fala: `Dica ${i + 1}/${DICAS_ROBO.length}: ${DICAS_ROBO[i]}` }));
+      } else {
+        dicasRobo.current = -1; // esgotou o estoque — volta ao normal
+        setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "😤" }));
+        setG((s) => ({ ...s, fala: "Acabou o estoque de sabedoria. Agora vai lá e lucra. 😤" }));
+      }
+      setTimeout(() => setRobo((r) => (r.anim === "eletrico" ? r : { ...r, cara: dicasRobo.current >= 0 ? "🤓" : "🤖" })), 1100);
+      return;
+    }
     const agora = Date.now();
     cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 2500), agora];
     if (cliquesRobo.current.length >= 5) {
-      // spammou demais: CURTO-CIRCUITO — treme, fala errado, e reinicia
+      // spammou demais: CURTO-CIRCUITO — treme, fala errado… e o curto destrava o modo conselheiro
       cliquesRobo.current = [];
       setRoboChoque(true);
       SFX.choque();
@@ -514,8 +576,9 @@ export default function App() {
       setG((s) => ({ ...s, fala: FALAS_GLITCH[Math.floor(Math.random() * FALAS_GLITCH.length)] }));
       setTimeout(() => {
         setRoboChoque(false);
-        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …não faz mais isso." }));
+        dicasRobo.current = 0;
+        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
+        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …opa. O curto destravou o MODO CONSELHEIRO. Me cutuca. 🤓" }));
       }, 2600);
       return;
     }
@@ -745,7 +808,7 @@ export default function App() {
           </div>
 
           <div>
-            <button onClick={() => { SFX.clique(); musica(true); reiniciar("fundo"); }} style={{ ...btnJogar, marginTop: 0, fontSize: 18, padding: "16px 64px" }}>
+            <button onClick={() => { SFX.partida(); musica(true); reiniciar("fundo"); }} style={{ ...btnJogar, marginTop: 0, fontSize: 18, padding: "16px 64px" }}>
               ▶ JOGAR
             </button>
           </div>
@@ -1096,11 +1159,26 @@ export default function App() {
         </div>
       )}
 
-      {g.mes > 1 && (
-        <button onClick={encerrar} style={{ width: "100%", marginTop: 10, background: "none", border: "none", color: C.mute, fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
+      {/* trava de segurança: 1º clique só abre a pergunta — o encerrar de verdade fica atrás da confirmação
+          (ele fica logo abaixo do VENDER TOKENS e já engoliu partida por clique acidental) */}
+      {g.mes > 1 && (confEnc ? (
+        <div style={{ marginTop: 28, textAlign: "center", padding: "12px", border: `1px solid ${C.line}`, borderRadius: 12 }}>
+          <div style={{ color: C.text, fontSize: 13.5, fontWeight: 800, marginBottom: 10 }}>🏁 Encerrar a partida agora?</div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+            <button onClick={() => { setConfEnc(false); encerrar(); }} style={{ padding: "9px 16px", borderRadius: 10, border: "none", cursor: "pointer", background: C.red, color: "#fff", fontWeight: 800, fontSize: 13 }}>
+              sim, ver minha nota
+            </button>
+            <button onClick={() => { SFX.clique(); setConfEnc(false); }} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${C.line}`, cursor: "pointer", background: "none", color: C.text, fontWeight: 700, fontSize: 13 }}>
+              ✕ continuar jogando
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => { SFX.clique(); setConfEnc(true); setTimeout(() => setConfEnc(false), 6000); }}
+          style={{ width: "100%", marginTop: 28, background: "none", border: "none", color: C.mute, fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
           🏁 encerrar agora e ver minha nota
         </button>
-      )}
+      ))}
 
     </Frame>
   );

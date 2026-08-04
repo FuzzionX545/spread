@@ -37,6 +37,7 @@ const TAXA  = { 1: 0.052, 2: 0.043, 3: 0.036, 4: 0.029, 5: 0.023 };
 
 // fundo único de R$ 1 milhão — crédito PME de verdade
 const OPEX = 9000;          // equipe, sistema e cobrança por mês
+const TURBO_CUSTO = 6000;   // ⚡ Liberação na Hora: análise em minutos — velocidade custa gente e sistema
 const FUNDING = 0.003;      // investidor recebe CDI + 3,6% a.a. (faixa real de cota sênior)
 // MERCADO = em que ano do Brasil você está jogando (muda calote e frequência de crise)
 const MERCADOS = {
@@ -430,6 +431,7 @@ const INICIO = (modo = null, clima = "normal") => {
   pedidos: novosPedidos(1),
   idx: 0,
   vendeuMes: false,
+  turbo: false,               // ⚡ Liberação na Hora desligada por padrão
   mercado: sorteiaMercado(),
   fala: modo === "mkt" ? "Origina e repassa — lucro no giro! 🔁" : "Bora emprestar dinheiro! 🚀",
   anim: "",
@@ -594,7 +596,8 @@ export default function App() {
   const opcoes = p ? [
     { rot: "😇", t: Math.max(0.011, tBase - 0.008), aceita: 1.0 },
     { rot: "🙂", t: tBase, aceita: duro ? 0.7 : 0.95 },
-    { rot: "🤑", t: tBase + 0.015, aceita: duro ? 0.3 : 0.65 },
+    // ⚡ com Liberação na Hora, a velocidade compra aceitação: quem tem pressa engole a taxa alta
+    { rot: "🤑", t: tBase + 0.015, aceita: g.turbo ? (duro ? 0.5 : 0.85) : (duro ? 0.3 : 0.65) },
   ] : [];
 
   const nota = useMemo(() => {
@@ -808,16 +811,18 @@ export default function App() {
       const custo = senior * (selic / 12 + FUNDING);
       senior += custo;
 
-      // custo operacional fixo (equipe, sistema, cobrança)
-      caixa -= OPEX;
+      // custo operacional fixo (equipe, sistema, cobrança) + ⚡ turbo se ligado
+      const turboCusto = s.turbo ? TURBO_CUSTO : 0;
+      caixa -= OPEX + turboCusto;
 
       // carta-resumo única do fechamento
-      const liquido = recebido + rendeu - custo - OPEX;
+      const liquido = recebido + rendeu - custo - OPEX - turboCusto;
       const partes = [];
       if (recebido > 0) partes.push(`💰 +${fmt(recebido)} parcelas`);
       if (rendeu > 0) partes.push(`💹 +${fmt(rendeu)} rendimento do caixa (CDI)`);
       partes.push(`🏦 –${fmt(custo)} juros dos investidores`);
       partes.push(`🏢 –${fmt(OPEX)} custo de operação (equipe/sistema)`);
+      if (turboCusto) partes.push(`⚡ –${fmt(turboCusto)} Liberação na Hora`);
       if (quitados > 0) partes.push(`🎉 ${quitados} ${quitados > 1 ? "quitaram" : "quitou"}`);
       fila.unshift({ emoji: "📊", titulo: "Fechamento do mês", sub: partes.join(" · "), delta: liquido, cor: liquido >= 0 ? C.green : C.amber });
 
@@ -859,7 +864,7 @@ export default function App() {
 
       return {
         ...s, caixa, senior, perdas, onda, stress, selic, fim, processos,
-        gastoAcum: s.gastoAcum + custo + OPEX,
+        gastoAcum: s.gastoAcum + custo + OPEX + turboCusto,
         carteira: sobrev, mes: Math.min(mes, MESES + 1),
         pedidos: novosPedidos(mes), idx: 0,
         vendeuMes: false, mercado: sorteiaMercado(),
@@ -1168,6 +1173,29 @@ export default function App() {
         <Balao txt={g.fala} mini />
       </div>
 
+      {/* ⚡ diferencial competitivo: análise em minutos — por isso mais gente engole a taxa alta */}
+      <div style={{ display: "flex", justifyContent: "flex-end", margin: "0 0 8px" }}>
+        <button
+          onClick={() => {
+            SFX.clique();
+            setG((s) => ({
+              ...s, turbo: !s.turbo,
+              fala: !s.turbo
+                ? "⚡ Liberação na Hora LIGADA: análise em minutos. A taxa alta desce mais fácil. Custa R$ 6 mil/mês."
+                : "Liberação na Hora desligada. De volta ao comitê lento. 🐢",
+            }));
+          }}
+          style={{
+            background: g.turbo ? "#123B24" : "none",
+            border: `1px solid ${g.turbo ? C.green : C.line}`,
+            color: g.turbo ? C.green : C.mute,
+            borderRadius: 10, padding: "5px 12px", fontSize: 11, fontWeight: 800, cursor: "pointer",
+          }}
+        >
+          ⚡ LIBERAÇÃO NA HORA · {g.turbo ? "LIGADA" : "desligada"} · +R$ 6 mil/mês
+        </button>
+      </div>
+
       {!acabou && p ? (
         <div className={g.anim} key={p.id} style={cardCliente}>
           <div style={{ fontSize: 60, textAlign: "center" }}>{p.emoji}</div>
@@ -1378,6 +1406,8 @@ const DICAS = [
     mais: "Os investidores colocam 80% do fundo e recebem CDI + 3,6% ao ano (na vida real hoje: cota sênior de FIDC paga CDI+2 a 5%). Quem paga esse rendimento é VOCÊ, com os juros dos clientes. Se o cliente te paga 3,6% ao mês e o investidor custa ~1,4%, a diferença — o SPREAD — é seu lucro. Daí o nome do jogo." },
   { e: "💬", t: "Você define a taxa", d: "😇 aceita fácil · 🙂 justa · 🤑 pode recusar.",
     mais: "Cliente 🤨 pechincheiro recusa a taxa alta 70% das vezes (e até a justa, 30%). E tem o efeito escondido: taxa alta = parcela pesada = +35% de risco de calote, porque aperta o orçamento do cliente. É real: juro abusivo aumenta a inadimplência que ele tenta cobrir." },
+  { e: "⚡", t: "Liberação na Hora", d: "+R$ 6 mil/mês · a taxa alta desce mais fácil.",
+    mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Ligando o turbo, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro) — mas a velocidade custa gente e sistema: R$ 6 mil por mês, todo mês em que estiver ligada. Velocidade é produto: no mercado real, fintech cobra mais caro que banco e cresce ASSIM." },
   { e: "⭐", t: "As estrelas (score)", d: "Mais estrelas = paga certinho.",
     mais: "Chance de calote POR MÊS no mercado normal: ⭐ 12,6% · ⭐⭐ 7,7% · ⭐⭐⭐ 4,5% · ⭐⭐⭐⭐ 2,5% · ⭐⭐⭐⭐⭐ 1,3%. Por isso as taxas que eles aceitam são diferentes (5,2% → 2,3% ao mês): o banco cobra dos arriscados o prejuízo que eles causam. Na vida real esse score vem do Serasa/histórico — e funciona igualzinho." },
   { e: "🪙", t: "Tokenização (RWA)", d: "Sua carteira vira 10 tokens. Venda = dinheiro na hora, risco vai junto.",

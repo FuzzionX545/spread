@@ -100,6 +100,66 @@ function tom(freq, dur = 0.12, type = "sine", vol = 0.14, delay = 0) {
     else toca();
   } catch (e) {}
 }
+/* ---- peças da voz "curto-circuito" do robô ---- */
+// assobio que desliza de f0 pra f1, com warble opcional
+function chirpRobo(a, t, o2) {
+  const o = a.createOscillator(); o.type = o2.type || "sine";
+  o.frequency.setValueAtTime(o2.f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(120, o2.f1), t + o2.dur);
+  if (o2.vib) {
+    const lfo = a.createOscillator(), lg = a.createGain();
+    lfo.frequency.value = o2.vib; lg.gain.value = o2.f0 * (o2.vibDepth || 0.1);
+    lfo.connect(lg); lg.connect(o.frequency);
+    lfo.start(t); lfo.stop(t + o2.dur + 0.02);
+  }
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(o2.vol || 0.11, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.001, t + o2.dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t + o2.dur + 0.02);
+}
+// faísca: serra descendo rápido — eletricidade correndo
+function zapRobo(a, t, f0, dur = 0.06, vol = 0.09) {
+  const o = a.createOscillator(); o.type = "sawtooth";
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(100, f0 * (0.2 + Math.random() * 0.5)), t + dur);
+  const g = a.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+// estalo de circuito: rajada de ruído passando por filtro estreito
+function estaloRobo(a, t, freq = 3000, dur = 0.05, vol = 0.12) {
+  const n = Math.floor(a.sampleRate * dur);
+  const buf = a.createBuffer(1, n, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource(); src.buffer = buf;
+  const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = 6;
+  const g = a.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(a.destination);
+  src.start(t); src.stop(t + dur + 0.01);
+}
+// processador travando: a frequência pula em degraus aleatórios
+function glitchRobo(a, t, f0, passos = 5, vol = 0.08) {
+  const o = a.createOscillator(); o.type = "square";
+  const g = a.createGain();
+  let tt = t;
+  for (let i = 0; i < passos; i++) {
+    o.frequency.setValueAtTime(f0 * (0.5 + Math.random() * 1.6), tt);
+    tt += 0.022 + Math.random() * 0.02;
+  }
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, tt + 0.02);
+  o.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(tt + 0.04);
+  return tt - t;
+}
+
 const SFX = {
   clique: () => tom(520, 0.06, "square", 0.07),
   partida: () => { // apito de largada: três toques subindo + o "VALENDO!"
@@ -179,9 +239,38 @@ const SFX = {
     const N = [[659, .28, 0], [659, .2, .34], [587, .28, .6], [523, .4, .92], [392, .8, 1.4]];
     N.forEach(([f, d, t]) => { tom(f, d, "sine", 0.1, t); tom(f / 2, d, "sine", 0.05, t); });
   },
-  robo: () => { // bip-bop de robozinho — parece que ele tá conversando (a voz clássica, o João prefere)
-    const b = 500 + Math.random() * 900;
-    tom(b, 0.06, "square", 0.09); tom(b * 1.5, 0.07, "square", 0.08, 0.07); tom(b * 0.8, 0.06, "square", 0.07, 0.15);
+  robo: (mes = 1) => { // voz CURTO-CIRCUITO (aprovada 04/08): assobio + faísca + estalo + glitch.
+    // Escala com o mês: o tom sobe e o bug piora — mês 1 é um robô calmo travado, mês 12 é pânico.
+    if (!somLigado) return;
+    try {
+      const a = actx(); if (!a) return;
+      const toca = () => {
+        const pitch = 0.78 + (mes - 1) * 0.058;
+        const caos = 0.25 + (mes - 1) * 0.045;
+        const passos = 4 + Math.floor(mes / 3);
+        let t = a.currentTime + 0.02;
+        const n = 4 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) {
+          const sorte = Math.random();
+          const f0 = (600 + Math.random() * 1600) * pitch;
+          if (sorte < caos * 0.55) {
+            t += glitchRobo(a, t, f0, passos) + 0.02;               // processador travando
+          } else if (sorte < caos) {
+            zapRobo(a, t, f0 * 1.8); zapRobo(a, t + 0.05, f0 * 0.9); t += 0.12; // faísca dupla
+          } else if (sorte < caos + 0.25) {
+            estaloRobo(a, t, 2500 + Math.random() * 2000);          // estalo de circuito
+            chirpRobo(a, t + 0.04, { f0: f0 * 1.4, f1: f0 * 0.3, dur: 0.12, vib: 20, vibDepth: 0.18, type: "triangle", vol: 0.09 });
+            t += 0.18;
+          } else {
+            const fA = f0 * 1.2, fB = f0 * 1.8;                     // trinado
+            for (let k = 0; k < 5; k++) { chirpRobo(a, t, { f0: k % 2 ? fA : fB, f1: k % 2 ? fA : fB, dur: 0.028, vol: 0.09 }); t += 0.034; }
+          }
+          t += 0.02 + Math.random() * 0.05;
+        }
+      };
+      if (a.state === "suspended") a.resume().then(toca).catch(() => {});
+      else toca();
+    } catch (e) {}
   },
   choque: () => { // curto-circuito: rajada de bips doidos caindo de tom
     for (let i = 0; i < 9; i++) tom(1500 - i * 140 + Math.random() * 300, 0.05, "sawtooth", 0.08, i * 0.07);
@@ -582,7 +671,7 @@ export default function App() {
     if (roboChoque) return; // em curto-circuito ele não responde
     // MODO CONSELHEIRO ativo: UMA análise do CLIENTE DA MESA por desbloqueio
     if (dicasRobo.current > 0) {
-      SFX.robo();
+      SFX.robo(g.mes);
       const dica = dicaDoCliente(g.pedidos[g.idx]);
       setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
       if (!dica) { // mesa vazia — não gasta a análise
@@ -597,7 +686,7 @@ export default function App() {
     // acabou de gastar a análise do mês: um aviso claro, e aí volta ao normal
     if (avisoConselheiro.current) {
       avisoConselheiro.current = false;
-      SFX.robo();
+      SFX.robo(g.mes);
       setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "🤖" }));
       setG((s) => ({ ...s, fala: "A análise do mês já foi. Mês que vem tem outra. 🤖" }));
       return;
@@ -627,7 +716,7 @@ export default function App() {
       }, 2600);
       return;
     }
-    SFX.robo();
+    SFX.robo(g.mes);
     setRobo((r) => ({
       n: r.n + 1,
       anim: ANIMS_ROBO[Math.floor(Math.random() * ANIMS_ROBO.length)],

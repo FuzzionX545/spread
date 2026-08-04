@@ -1173,26 +1173,29 @@ export default function App() {
         <Balao txt={g.fala} mini />
       </div>
 
-      {/* ⚡ diferencial competitivo: análise em minutos — por isso mais gente engole a taxa alta */}
+      {/* ⚡ diferencial competitivo: análise em minutos — por isso mais gente engole a taxa alta.
+          Visual discreto: o custo aparece na fala ao ligar, no tooltip e na Ajuda — não no botão. */}
       <div style={{ display: "flex", justifyContent: "flex-end", margin: "0 0 8px" }}>
         <button
+          title="Análise de crédito em minutos: a taxa alta é aceita com muito mais frequência. Custa R$ 6 mil por mês enquanto estiver ligada."
           onClick={() => {
             SFX.clique();
             setG((s) => ({
               ...s, turbo: !s.turbo,
               fala: !s.turbo
-                ? "⚡ Liberação na Hora LIGADA: análise em minutos. A taxa alta desce mais fácil. Custa R$ 6 mil/mês."
+                ? "⚡ Liberação na Hora LIGADA (R$ 6 mil/mês): análise em minutos — quem tem pressa aceita a taxa alta."
                 : "Liberação na Hora desligada. De volta ao comitê lento. 🐢",
             }));
           }}
           style={{
             background: g.turbo ? "#123B24" : "none",
-            border: `1px solid ${g.turbo ? C.green : C.line}`,
+            border: `1px solid ${g.turbo ? C.green : "transparent"}`,
             color: g.turbo ? C.green : C.mute,
-            borderRadius: 10, padding: "5px 12px", fontSize: 11, fontWeight: 800, cursor: "pointer",
+            borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 700,
+            cursor: "pointer", opacity: g.turbo ? 1 : 0.75,
           }}
         >
-          ⚡ LIBERAÇÃO NA HORA · {g.turbo ? "LIGADA" : "desligada"} · +R$ 6 mil/mês
+          ⚡ {g.turbo ? "Liberação na Hora: LIGADA" : "ligar Liberação na Hora"}
         </button>
       </div>
 
@@ -1406,8 +1409,10 @@ const DICAS = [
     mais: "Os investidores colocam 80% do fundo e recebem CDI + 3,6% ao ano (na vida real hoje: cota sênior de FIDC paga CDI+2 a 5%). Quem paga esse rendimento é VOCÊ, com os juros dos clientes. Se o cliente te paga 3,6% ao mês e o investidor custa ~1,4%, a diferença — o SPREAD — é seu lucro. Daí o nome do jogo." },
   { e: "💬", t: "Você define a taxa", d: "😇 aceita fácil · 🙂 justa · 🤑 pode recusar.",
     mais: "Cliente 🤨 pechincheiro recusa a taxa alta 70% das vezes (e até a justa, 30%). E tem o efeito escondido: taxa alta = parcela pesada = +35% de risco de calote, porque aperta o orçamento do cliente. É real: juro abusivo aumenta a inadimplência que ele tenta cobrir." },
-  { e: "⚡", t: "Liberação na Hora", d: "+R$ 6 mil/mês · a taxa alta desce mais fácil.",
-    mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Ligando o turbo, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro) — mas a velocidade custa gente e sistema: R$ 6 mil por mês, todo mês em que estiver ligada. Velocidade é produto: no mercado real, fintech cobra mais caro que banco e cresce ASSIM." },
+  { e: "🏦", t: "Por que eles vêm até VOCÊ?", d: "Todo cliente aqui foi recusado (ou não esperado) pelo banco grande.",
+    mais: "O banco grande recusa ou demora por motivos que o jogo carrega escondidos: sem garantia real (os clientes sem 🧾), empresa jovem (menos de 1 ano de porta aberta), sem histórico (nunca pegou empréstimo), parcela apertada no orçamento — e o principal: TICKET PEQUENO. Analisar um pedido custa quase o mesmo pro banco seja ele de R$ 60 mil ou de R$ 5 milhões; no pequeno, o custo da análise come o lucro, então o banco nem olha. É por isso que os pedidos aqui são de R$ 40 a 160 mil: esse é o mercado que sobra — e o seu negócio é ser o banco que ele encontra." },
+  { e: "⚡", t: "Liberação na Hora", d: "Análise em minutos — CUSTA R$ 6 mil todo mês ligada.",
+    mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Com a chave LIGADA, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro). O preço: R$ 6 mil SAEM do seu caixa todo mês em que a chave estiver ligada — é a equipe extra e o sistema que analisam rápido, pagos mesmo se ninguém pegar empréstimo no mês. Não é ganho garantido: é custo fixo comprando aceitação. Velocidade é produto — no mercado real, fintech cobra mais caro que banco e cresce exatamente assim." },
   { e: "⭐", t: "As estrelas (score)", d: "Mais estrelas = paga certinho.",
     mais: "Chance de calote POR MÊS no mercado normal: ⭐ 12,6% · ⭐⭐ 7,7% · ⭐⭐⭐ 4,5% · ⭐⭐⭐⭐ 2,5% · ⭐⭐⭐⭐⭐ 1,3%. Por isso as taxas que eles aceitam são diferentes (5,2% → 2,3% ao mês): o banco cobra dos arriscados o prejuízo que eles causam. Na vida real esse score vem do Serasa/histórico — e funciona igualzinho." },
   { e: "🪙", t: "Tokenização (RWA)", d: "Sua carteira vira 10 tokens. Venda = dinheiro na hora, risco vai junto.",

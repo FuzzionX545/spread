@@ -579,18 +579,17 @@ export default function App() {
 
   function cutucarRobo() {
     if (roboChoque) return; // em curto-circuito ele não responde
-    // MODO CONSELHEIRO ativo: cada cutucada analisa o CLIENTE DA MESA (3 análises por desbloqueio)
+    // MODO CONSELHEIRO ativo: UMA análise do CLIENTE DA MESA por desbloqueio
     if (dicasRobo.current > 0) {
       SFX.robo();
       const dica = dicaDoCliente(g.pedidos[g.idx]);
       setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-      if (!dica) { // mesa vazia — não gasta análise
+      if (!dica) { // mesa vazia — não gasta a análise
         setG((s) => ({ ...s, fala: "Mesa vazia. Roda o mês! 📅" }));
         return;
       }
-      dicasRobo.current -= 1;
-      const fim = dicasRobo.current === 0 ? " (última do mês!)" : "";
-      setG((s) => ({ ...s, fala: dica + fim }));
+      dicasRobo.current = 0;
+      setG((s) => ({ ...s, fala: dica }));
       return;
     }
     const agora = Date.now();
@@ -612,8 +611,8 @@ export default function App() {
             return { ...s, fala: "sistema reiniciado ✅ …as dicas deste mês já eram. Volta no próximo. 😤" };
           }
           conselheiroMes.current = s.mes;
-          dicasRobo.current = 3;
-          return { ...s, fala: "sistema reiniciado ✅ …o curto destravou o MODO CONSELHEIRO: 3 análises do cliente da mesa. Me cutuca. 🤖" };
+          dicasRobo.current = 1;
+          return { ...s, fala: "sistema reiniciado ✅ …o curto destravou UMA análise do cliente da mesa. Usa bem. 🤖" };
         });
       }, 2600);
       return;

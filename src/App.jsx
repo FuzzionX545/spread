@@ -179,42 +179,21 @@ const SFX = {
     const N = [[659, .28, 0], [659, .2, .34], [587, .28, .6], [523, .4, .92], [392, .8, 1.4]];
     N.forEach(([f, d, t]) => { tom(f, d, "sine", 0.1, t); tom(f / 2, d, "sine", 0.05, t); });
   },
-  robo: () => { // voz v2: tagarela de droide — bipes que ESCORREGAM de tom, como se falasse de verdade
-    try {
-      const a = actx(); if (!a || !somLigado) return;
-      let t = a.currentTime + 0.01;
-      const n = 4 + Math.floor(Math.random() * 3); // 4 a 6 sílabas
-      for (let i = 0; i < n; i++) {
-        const f0 = 600 + Math.random() * 1100;
-        const f1 = Math.max(140, f0 * (0.55 + Math.random() * 0.9)); // desliza pra cima ou pra baixo
-        const d = 0.05 + Math.random() * 0.06;
-        const o = a.createOscillator(), g = a.createGain();
-        o.type = i % 2 ? "triangle" : "square";
-        o.frequency.setValueAtTime(f0, t);
-        o.frequency.exponentialRampToValueAtTime(f1, t + d);
-        g.gain.setValueAtTime(0.001, t);
-        g.gain.linearRampToValueAtTime(0.085, t + 0.012);
-        g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        o.connect(g); g.connect(a.destination);
-        o.start(t); o.stop(t + d + 0.02);
-        t += d + 0.015 + Math.random() * 0.05; // pausinha irregular entre sílabas = mais vivo
-      }
-    } catch (e) {}
+  robo: () => { // bip-bop de robozinho — parece que ele tá conversando (a voz clássica, o João prefere)
+    const b = 500 + Math.random() * 900;
+    tom(b, 0.06, "square", 0.09); tom(b * 1.5, 0.07, "square", 0.08, 0.07); tom(b * 0.8, 0.06, "square", 0.07, 0.15);
   },
   choque: () => { // curto-circuito: rajada de bips doidos caindo de tom
     for (let i = 0; i < 9; i++) tom(1500 - i * 140 + Math.random() * 300, 0.05, "sawtooth", 0.08, i * 0.07);
     tom(60, 0.9, "sawtooth", 0.07, 0.65);
   },
 };
-// trilha v2: progressão Am → F → C → G em arpejo, baixo redondo por baixo e brilhos ocasionais.
-// Mais melódica que a antiga (que era uma escala sobe-desce) — tem tensão e resolução de verdade.
-const MELODIA = [
-  329.6, 440, 523.3, 440,     // Lá menor — a "casa"
-  349.2, 440, 523.3, 587.3,   // Fá — abre
-  392.0, 523.3, 659.3, 523.3, // Dó — brilha
-  392.0, 493.9, 587.3, 493.9, // Sol — pede pra voltar pro começo
+// a trilha original, incrementada: baixo, harmonia e um ciclo 2x mais longo antes de repetir
+// (a melodia v2 em Am-F-C-G foi guardada na playlist do FuzzQuest pra quando o João pedir)
+const NOTAS = [
+  220, 261.6, 329.6, 392, 329.6, 261.6, 246.9, 293.7,   // parte A (a melodia original)
+  220, 261.6, 329.6, 440, 392, 329.6, 293.7, 246.9,     // parte B (variação que sobe mais)
 ];
-const BAIXO = [110, 87.31, 130.81, 98]; // A2, F2, C3, G2 — a fundação de cada compasso
 let musicaQuer = false; // o jogador QUER música? (sobrevive à troca de aba)
 function musica(ligar) {
   musicaQuer = !!ligar && somLigado;
@@ -222,13 +201,13 @@ function musica(ligar) {
   if (!ligar || !somLigado) return;
   let i = 0;
   musicTimer = setInterval(() => {
-    const n = MELODIA[i % MELODIA.length];
-    tom(n, 1.4, "triangle", 0.055);                                        // arpejo principal
-    if (i % 4 === 0) tom(BAIXO[Math.floor(i / 4) % 4], 3.0, "sine", 0.055); // baixo no início do compasso
-    if (i % 8 === 6) tom(n * 2, 0.8, "sine", 0.025);                        // brilho uma oitava acima
-    if (i % 16 === 12) tom(n / 2, 1.6, "triangle", 0.03);                   // profundidade no fim do ciclo
+    const n = NOTAS[i % NOTAS.length];
+    tom(n, 1.9, "triangle", 0.07);                          // pad principal (o de sempre)
+    if (i % 2 === 0) tom(n / 2, 2.6, "sine", 0.05);         // baixo acompanhando por baixo
+    if (i % 4 === 0) tom(n * 2, 1.3, "sine", 0.028);        // brilho uma oitava acima
+    if (i % 8 === 4) tom(n * 1.5, 1.7, "triangle", 0.032);  // harmonia que entra de vez em quando
     i++;
-  }, 700);
+  }, 880);
 }
 // pausa SEM esquecer que o jogador queria música — pra ela voltar quando a aba voltar
 function pausarMusica() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
@@ -292,21 +271,18 @@ const FALAS_GLITCH = [
   "vendendo t-t-tudo a 99% de d-deságio— NÃO. ERRO. ERRO. ⚡",
   "01001011 kkkk 01000101 aprova o 1★ apr— bzzzt NÃO APROVA",
 ];
-// MODO CONSELHEIRO: o robô analisa o CLIENTE QUE ESTÁ NA MESA — uma frase só, direto ao ponto.
-// Prioridade: o fator que mais decide aquele pedido específico.
-function dicaDoCliente(p) {
-  if (!p) return "Mesa vazia. Roda o mês! 📅";
-  const parcela = (p.valor * (1 + TAXA[p.score] * p.prazo)) / p.prazo;
-  const comp = Math.round((parcela / p.renda) * 100); // % do faturamento comprometido
-  if (p.gar) return "🧾 Tem garantia — quase não caloteia. Taxa justa fecha fácil.";
-  if (comp > 45) return `A parcela come ~${comp}% do faturamento dele. Cheiro de calote.`;
-  if (p.score <= 2 && p.valor >= 100000) return `${p.score}★ pedindo ${Math.round(p.valor / 1000)} mil? Coragem é isso aí.`;
-  if (p.humor === "duro") return "Pechincheiro. Taxa alta ele recusa — vai na justa.";
-  if (p.score >= 4 && comp <= 30) return `${p.score}★ e parcela leve (~${comp}%). Cliente de ouro.`;
-  if (p.tempoNeg < 12) return "Menos de 1 ano de porta aberta. Negócio verde, risco extra.";
-  if (comp <= 20) return `Parcela leve (~${comp}% do faturamento). Folga boa.`;
-  return `Mediano: ${p.score}★, parcela ~${comp}%. Decide pelo teu caixa.`;
-}
+// MODO CONSELHEIRO (o formato que o João gostou): o curto-circuito solta as dicas que o robô
+// guardava — curtas, em ordem, sem repetir. Todas verdadeiras na mecânica do jogo.
+const DICAS_ROBO = [
+  "🧾 Garantia = quase zero calote. E aceita juro menor.",
+  "Cliente 🤨 recusa taxa alta 7 em 10 vezes. Vai na justa.",
+  "Taxa 🤑 = parcela pesada = +35% de calote.",
+  "Venda tokens no 🔥. No 🥶, só se o caixa implorar.",
+  "Lote maior = desconto maior. Faz a conta antes.",
+  "Deixa caixa: o investidor saca até 15% sem avisar.",
+  "Acordo = 35% na hora. Justiça = 65%… em 2 meses.",
+  "Selic subiu? Funding caro. Repassa na taxa.",
+];
 
 let SEQ = 1;
 const QUER_PME = ["🏭 ampliar a produção", "🚛 renovar a frota", "🏪 abrir a 2ª loja", "📦 encher o estoque", "🛠️ maquinário novo", "💰 capital de giro", "🖥️ sistema novo", "👷 contratar equipe"];
@@ -388,8 +364,7 @@ export default function App() {
   const [robo, setRobo] = useState({ n: 0, anim: "", cara: "🤖" }); // cutucou o robô → animação aleatória
   const [roboChoque, setRoboChoque] = useState(false); // spam demais → curto-circuito
   const cliquesRobo = useRef([]);
-  const conselheiro = useRef(false);   // desbloqueado pelo curto-circuito — vira permanente na partida
-  const dicaFeita = useRef(null);      // id do último cliente analisado (uma análise por cliente)
+  const dicasRobo = useRef(-1);        // -1 = modo normal; >= 0 = próxima dica do modo conselheiro
   const [conquista, setConquista] = useState(null); // toast de achievement (🏆)
   const [confEnc, setConfEnc] = useState(false); // trava de segurança do botão de encerrar
   const [fimFx, setFimFx] = useState({ queda: 0, chave: 0 }); // interações na tela final (caveira afundando etc)
@@ -600,21 +575,24 @@ export default function App() {
 
   function cutucarRobo() {
     if (roboChoque) return; // em curto-circuito ele não responde
-    // MODO CONSELHEIRO (desbloqueado): UMA análise por cliente — do cliente que está na mesa
-    if (conselheiro.current) {
-      const p = g.pedidos[g.idx];
-      if (p && dicaFeita.current !== p.id) {
-        dicaFeita.current = p.id;
-        SFX.robo();
+    // MODO CONSELHEIRO: cada cutucada solta uma dica curta, em ordem, sem repetir
+    if (dicasRobo.current >= 0) {
+      SFX.robo();
+      const i = dicasRobo.current;
+      if (i < DICAS_ROBO.length) {
+        dicasRobo.current = i + 1;
         setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: dicaDoCliente(p) }));
-        return;
+        setG((s) => ({ ...s, fala: DICAS_ROBO[i] }));
+      } else {
+        dicasRobo.current = -1; // esgotou o estoque — volta ao normal
+        setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "🤖" }));
+        setG((s) => ({ ...s, fala: "Acabou a sabedoria. Agora vai lá e lucra. 😤" }));
       }
-      // já analisou esse cliente (ou mesa vazia): cai na cutucada normal de sempre
+      return;
     }
     const agora = Date.now();
     cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 3000), agora];
-    if (!conselheiro.current && cliquesRobo.current.length >= 9) {
+    if (cliquesRobo.current.length >= 9) {
       // insistiu MUITO: CURTO-CIRCUITO — treme, fala errado… e o curto destrava o modo conselheiro
       cliquesRobo.current = [];
       setRoboChoque(true);
@@ -623,11 +601,11 @@ export default function App() {
       setG((s) => ({ ...s, fala: FALAS_GLITCH[Math.floor(Math.random() * FALAS_GLITCH.length)] }));
       setTimeout(() => {
         setRoboChoque(false);
-        conselheiro.current = true;
-        setConquista("MODO CONSELHEIRO desbloqueado — o robô analisa o cliente da mesa");
+        dicasRobo.current = 0;
+        setConquista("MODO CONSELHEIRO desbloqueado — cutuca o robô pra ouvir as dicas");
         setTimeout(() => setConquista(null), 4200);
         setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …o curto ligou algo novo. Me cutuca com um cliente na mesa." }));
+        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …o curto soltou umas dicas. Me cutuca." }));
       }, 2600);
       return;
     }

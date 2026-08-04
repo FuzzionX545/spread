@@ -370,6 +370,7 @@ export default function App() {
   const cliquesRobo = useRef([]);
   const dicasRobo = useRef(0);         // análises restantes do modo conselheiro (0 = inativo)
   const conselheiroMes = useRef(0);    // último mês do jogo em que o conselheiro foi desbloqueado (1x por mês)
+  const avisoConselheiro = useRef(false); // logo após usar a análise, o próximo cutuco explica que acabou
   const [confEnc, setConfEnc] = useState(false); // trava de segurança do botão de encerrar
   const [fimFx, setFimFx] = useState({ queda: 0, chave: 0 }); // interações na tela final (caveira afundando etc)
   // decoração da tela final sorteada UMA vez por partida — senão qualquer clique re-sorteia e a chuva reinicia
@@ -585,11 +586,20 @@ export default function App() {
       const dica = dicaDoCliente(g.pedidos[g.idx]);
       setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
       if (!dica) { // mesa vazia — não gasta a análise
-        setG((s) => ({ ...s, fala: "Mesa vazia. Roda o mês! 📅" }));
+        setG((s) => ({ ...s, fala: "🔍 Sem cliente na mesa pra analisar. Roda o mês e me cutuca de novo! 📅" }));
         return;
       }
       dicasRobo.current = 0;
-      setG((s) => ({ ...s, fala: dica }));
+      avisoConselheiro.current = true; // o próximo cutuco explica que a análise acabou
+      setG((s) => ({ ...s, fala: `🔍 ANÁLISE: ${dica}` }));
+      return;
+    }
+    // acabou de gastar a análise do mês: um aviso claro, e aí volta ao normal
+    if (avisoConselheiro.current) {
+      avisoConselheiro.current = false;
+      SFX.robo();
+      setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "🤖" }));
+      setG((s) => ({ ...s, fala: "A análise do mês já foi. Mês que vem tem outra. 🤖" }));
       return;
     }
     const agora = Date.now();
@@ -612,7 +622,7 @@ export default function App() {
           }
           conselheiroMes.current = s.mes;
           dicasRobo.current = 1;
-          return { ...s, fala: "sistema reiniciado ✅ …o curto destravou UMA análise do cliente da mesa. Usa bem. 🤖" };
+          return { ...s, fala: "sistema reiniciado ✅ …o curto liberou 1 ANÁLISE DE CLIENTE 🔍 — me cutuca com um cliente na mesa!" };
         });
       }, 2600);
       return;

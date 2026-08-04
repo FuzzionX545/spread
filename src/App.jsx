@@ -271,17 +271,17 @@ const FALAS_GLITCH = [
   "vendendo t-t-tudo a 99% de d-deságio— NÃO. ERRO. ERRO. ⚡",
   "01001011 kkkk 01000101 aprova o 1★ apr— bzzzt NÃO APROVA",
 ];
-// MODO CONSELHEIRO (o formato que o João gostou): o curto-circuito solta as dicas que o robô
-// guardava — curtas, em ordem, sem repetir. Todas verdadeiras na mecânica do jogo.
+// MODO CONSELHEIRO (a primeira versão — a que o João gostou): o curto-circuito "solta" as
+// dicas de negociação que o robô guardava — em ordem, sem repetir, todas verdadeiras na mecânica.
 const DICAS_ROBO = [
-  "🧾 Garantia = quase zero calote. E aceita juro menor.",
-  "Cliente 🤨 recusa taxa alta 7 em 10 vezes. Vai na justa.",
-  "Taxa 🤑 = parcela pesada = +35% de calote.",
-  "Venda tokens no 🔥. No 🥶, só se o caixa implorar.",
-  "Lote maior = desconto maior. Faz a conta antes.",
-  "Deixa caixa: o investidor saca até 15% sem avisar.",
-  "Acordo = 35% na hora. Justiça = 65%… em 2 meses.",
-  "Selic subiu? Funding caro. Repassa na taxa.",
+  "🧾 Cliente com recebíveis em garantia quase não dá calote — e ainda aceita juro menor.",
+  "Cliente 🤨 de cara fechada recusa a taxa alta 7 em 10 vezes. Vai na justa.",
+  "Taxa 🤑 = parcela pesada = +35% de chance de calote. Ganância tem preço.",
+  "Venda tokens com o 🔥 comprador animado. No 🥶, só se o caixa implorar.",
+  "Lote maior = desconto maior. Às vezes duas vendas pequenas rendem mais que uma grandona.",
+  "Deixa caixa sobrando: o investidor pode sacar até 15% num mês, sem avisar.",
+  "Calote: o acordo paga 35% NA HORA. A justiça promete 65%… daqui a 2 meses.",
+  "Selic subiu? Teu funding encareceu. Repassa na taxa ou o spread evapora.",
 ];
 
 let SEQ = 1;
@@ -365,7 +365,6 @@ export default function App() {
   const [roboChoque, setRoboChoque] = useState(false); // spam demais → curto-circuito
   const cliquesRobo = useRef([]);
   const dicasRobo = useRef(-1);        // -1 = modo normal; >= 0 = próxima dica do modo conselheiro
-  const [conquista, setConquista] = useState(null); // toast de achievement (🏆)
   const [confEnc, setConfEnc] = useState(false); // trava de segurança do botão de encerrar
   const [fimFx, setFimFx] = useState({ queda: 0, chave: 0 }); // interações na tela final (caveira afundando etc)
   // decoração da tela final sorteada UMA vez por partida — senão qualquer clique re-sorteia e a chuva reinicia
@@ -575,25 +574,26 @@ export default function App() {
 
   function cutucarRobo() {
     if (roboChoque) return; // em curto-circuito ele não responde
-    // MODO CONSELHEIRO: cada cutucada solta uma dica curta, em ordem, sem repetir
+    // MODO CONSELHEIRO: depois do curto, cada cutucada solta uma dica de verdade (em ordem, sem repetir)
     if (dicasRobo.current >= 0) {
       SFX.robo();
       const i = dicasRobo.current;
       if (i < DICAS_ROBO.length) {
         dicasRobo.current = i + 1;
-        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: DICAS_ROBO[i] }));
+        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
+        setG((s) => ({ ...s, fala: `Dica ${i + 1}/${DICAS_ROBO.length}: ${DICAS_ROBO[i]}` }));
       } else {
         dicasRobo.current = -1; // esgotou o estoque — volta ao normal
-        setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: "Acabou a sabedoria. Agora vai lá e lucra. 😤" }));
+        setRobo((r) => ({ n: r.n + 1, anim: "tremido", cara: "😤" }));
+        setG((s) => ({ ...s, fala: "Acabou o estoque de sabedoria. Agora vai lá e lucra. 😤" }));
       }
+      setTimeout(() => setRobo((r) => (r.anim === "eletrico" ? r : { ...r, cara: dicasRobo.current >= 0 ? "🤓" : "🤖" })), 1100);
       return;
     }
     const agora = Date.now();
-    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 3000), agora];
-    if (cliquesRobo.current.length >= 9) {
-      // insistiu MUITO: CURTO-CIRCUITO — treme, fala errado… e o curto destrava o modo conselheiro
+    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 2500), agora];
+    if (cliquesRobo.current.length >= 5) {
+      // spammou demais: CURTO-CIRCUITO — treme, fala errado… e o curto destrava o modo conselheiro
       cliquesRobo.current = [];
       setRoboChoque(true);
       SFX.choque();
@@ -602,10 +602,8 @@ export default function App() {
       setTimeout(() => {
         setRoboChoque(false);
         dicasRobo.current = 0;
-        setConquista("MODO CONSELHEIRO desbloqueado — cutuca o robô pra ouvir as dicas");
-        setTimeout(() => setConquista(null), 4200);
-        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤖" }));
-        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …o curto soltou umas dicas. Me cutuca." }));
+        setRobo((r) => ({ n: r.n + 1, anim: "pulo", cara: "🤓" }));
+        setG((s) => ({ ...s, fala: "sistema reiniciado ✅ …opa. O curto destravou o MODO CONSELHEIRO. Me cutuca. 🤓" }));
       }, 2600);
       return;
     }
@@ -1051,17 +1049,6 @@ export default function App() {
   /* ============ JOGO ============ */
   return (
     <Frame css={CSS}>
-      {conquista && ( // toast de achievement — desliza do topo, some sozinho
-        <div style={{
-          position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 90,
-          background: "#10231A", border: `1px solid ${C.green}`, color: C.green,
-          fontWeight: 800, fontSize: 13.5, padding: "11px 20px", borderRadius: 12,
-          boxShadow: "0 12px 36px rgba(0,0,0,.55), 0 0 24px rgba(74,222,128,.15)",
-          animation: "pop .35s ease-out", whiteSpace: "nowrap", maxWidth: "92vw", overflow: "hidden", textOverflow: "ellipsis",
-        }}>
-          🏆 {conquista}
-        </div>
-      )}
       <Topo g={g} cofre={cofre} vida={vida} onAjuda={() => setAjuda(true)} onReset={() => reiniciar()} som={som} onSom={alternarSom} />
       {ajuda && <Ajuda onClose={() => setAjuda(false)} />}
 

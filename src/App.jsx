@@ -37,7 +37,7 @@ const TAXA  = { 1: 0.052, 2: 0.043, 3: 0.036, 4: 0.029, 5: 0.023 };
 
 // fundo único de R$ 1 milhão — crédito PME de verdade
 const OPEX = 9000;          // equipe, sistema e cobrança por mês
-const TURBO_CUSTO = 6000;   // ⚡ Liberação na Hora: análise em minutos — velocidade custa gente e sistema
+const TURBO_CUSTO = 3000;   // ⚡ Liberação na Hora — reprecificada em 05/08 após 140 mil partidas simuladas: benefício médio ~4k/mês; a 6k destruía valor, a 3k é trade-off real (+lucro, -sobrevivência)
 const FUNDING = 0.003;      // investidor recebe CDI + 3,6% a.a. (faixa real de cota sênior)
 // MERCADO = em que ano do Brasil você está jogando (muda calote e frequência de crise)
 const MERCADOS = {
@@ -1177,13 +1177,13 @@ export default function App() {
           Visual discreto: o custo aparece na fala ao ligar, no tooltip e na Ajuda — não no botão. */}
       <div style={{ display: "flex", justifyContent: "flex-end", margin: "0 0 8px" }}>
         <button
-          title="Análise de crédito em minutos: a taxa alta é aceita com muito mais frequência. Custa R$ 6 mil por mês enquanto estiver ligada."
+          title="Análise de crédito em minutos: a taxa alta é aceita com muito mais frequência. Custa R$ 3 mil por mês enquanto estiver ligada."
           onClick={() => {
             SFX.clique();
             setG((s) => ({
               ...s, turbo: !s.turbo,
               fala: !s.turbo
-                ? "⚡ Liberação na Hora LIGADA (R$ 6 mil/mês): análise em minutos — quem tem pressa aceita a taxa alta."
+                ? "⚡ Liberação na Hora LIGADA (R$ 3 mil/mês): análise em minutos — quem tem pressa aceita a taxa alta."
                 : "Liberação na Hora desligada. De volta ao comitê lento. 🐢",
             }));
           }}
@@ -1411,8 +1411,8 @@ const DICAS = [
     mais: "Cliente 🤨 pechincheiro recusa a taxa alta 70% das vezes (e até a justa, 30%). E tem o efeito escondido: taxa alta = parcela pesada = +35% de risco de calote, porque aperta o orçamento do cliente. É real: juro abusivo aumenta a inadimplência que ele tenta cobrir." },
   { e: "🏦", t: "Por que eles vêm até VOCÊ?", d: "Todo cliente aqui foi recusado (ou não esperado) pelo banco grande.",
     mais: "O banco grande recusa ou demora por motivos que o jogo carrega escondidos: sem garantia real (os clientes sem 🧾), empresa jovem (menos de 1 ano de porta aberta), sem histórico (nunca pegou empréstimo), parcela apertada no orçamento — e o principal: TICKET PEQUENO. Analisar um pedido custa quase o mesmo pro banco seja ele de R$ 60 mil ou de R$ 5 milhões; no pequeno, o custo da análise come o lucro, então o banco nem olha. É por isso que os pedidos aqui são de R$ 40 a 160 mil: esse é o mercado que sobra — e o seu negócio é ser o banco que ele encontra." },
-  { e: "⚡", t: "Liberação na Hora", d: "Análise em minutos — CUSTA R$ 6 mil todo mês ligada.",
-    mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Com a chave LIGADA, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro). O preço: R$ 6 mil SAEM do seu caixa todo mês em que a chave estiver ligada — é a equipe extra e o sistema que analisam rápido, pagos mesmo se ninguém pegar empréstimo no mês. Não é ganho garantido: é custo fixo comprando aceitação. Velocidade é produto — no mercado real, fintech cobra mais caro que banco e cresce exatamente assim." },
+  { e: "⚡", t: "Liberação na Hora", d: "Análise em minutos — CUSTA R$ 3 mil todo mês ligada.",
+    mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Com a chave LIGADA, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro). O preço: R$ 3 mil SAEM do seu caixa todo mês em que a chave estiver ligada — é a equipe extra e o sistema que analisam rápido, pagos mesmo se ninguém pegar empréstimo no mês. Não é ganho garantido: é custo fixo comprando aceitação. Curiosidade de bastidor: essa chave já custou R$ 6 mil — 140 mil partidas simuladas mostraram que a esse preço ela DESTRUÍA valor (o benefício médio é ~R$ 4 mil/mês), então foi reprecificada. Velocidade é produto, mas produto tem preço certo." },
   { e: "⭐", t: "As estrelas (score)", d: "Mais estrelas = paga certinho.",
     mais: "Chance de calote POR MÊS no mercado normal: ⭐ 12,6% · ⭐⭐ 7,7% · ⭐⭐⭐ 4,5% · ⭐⭐⭐⭐ 2,5% · ⭐⭐⭐⭐⭐ 1,3%. Por isso as taxas que eles aceitam são diferentes (5,2% → 2,3% ao mês): o banco cobra dos arriscados o prejuízo que eles causam. Na vida real esse score vem do Serasa/histórico — e funciona igualzinho." },
   { e: "🪙", t: "Tokenização (RWA)", d: "Sua carteira vira 10 tokens. Venda = dinheiro na hora, risco vai junto.",

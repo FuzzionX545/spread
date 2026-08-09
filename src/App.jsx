@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
    GESTOR DE FUNDO — v3
    • Você define a taxa (cliente pode recusar)
    • 2 modos: Fundo Clássico × Marketplace
-   • HUD de venda visual (carteira + tokens)
+   • HUD de venda visual (carteira + cotas)
    Simulação educacional · dinheiro fictício
    ===================================================== */
 
@@ -577,7 +577,7 @@ export default function App() {
   const saldoPrincipal = g.carteira.reduce((s, l) => s + principal(l), 0);
   const cofre = g.caixa + saldoPrincipal - g.senior;
   const vida = Math.max(0, Math.min(1, cofre / g.cofre0));
-  // tokenização RWA: carteira dividida em 10 tokens
+  // securitização: carteira dividida em 10 cotas pra cessão parcial
   const maxTok = g.mercado.adj < 0 ? 10 : g.mercado.adj === 0 ? 6 : 3; // 🔥 até 10 · 😐 até 6 · 🥶 até 3
   const qtdOk = Math.max(1, Math.min(qtd, maxTok));
   // comprador esperto: o deságio cobre a perda esperada por calote + margem dele + humor do mercado + lote
@@ -658,7 +658,7 @@ export default function App() {
           ? []
           : s.carteira.map((l) => ({ ...l, vendido: (l.vendido || 0) + frac * (1 - (l.vendido || 0)) })),
         vendeuMes: true,
-        fala: `RWA! 🪙 Vendeu ${qtd} token${qtd > 1 ? "s" : ""} da carteira.`,
+        fala: `Securitizou! 📄 Cedeu ${qtd} cota${qtd > 1 ? "s" : ""} da carteira.`,
       };
     });
   }
@@ -730,7 +730,7 @@ export default function App() {
   }
 
   const textoNota = () =>
-    `Tirei ${nota}/99 no Spread_ 💸 simulador do mercado de crédito (mercado ${M.icone} ${M.nome}).\nSobreviva 12 meses no comando do seu próprio banco: https://fuzzionx.com/spread`;
+    `Tirei ${nota}/99 no Spread_ 💸 simulador do mercado de crédito (mercado ${M.icone} ${M.nome}).\nSobreviva 12 meses no comando da sua própria financeira: https://fuzzionx.com/spread`;
 
   async function copiarNota() {
     SFX.clique();
@@ -785,7 +785,7 @@ export default function App() {
       const rendeu = Math.max(0, caixa) * (selic / 12) * 0.5;
       caixa += rendeu;
 
-      // FUNDO: parcelas e calotes (divididos com donos de tokens)
+      // FUNDO: parcelas e calotes (divididos com quem comprou cotas)
       let recebido = 0, quitados = 0; const sobrev = [];
       for (const l of carteira) {
         const perfil = (l.compr > 0.4 ? 1.25 : 1) * (l.hist ? l.hist.mult : 1) * (l.tempoNeg && l.tempoNeg < 12 ? 1.2 : 1);
@@ -1299,8 +1299,8 @@ export default function App() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 8 }}>
                 <BotIcone onClick={() => setQtd(Math.max(1, qtdOk - 1))} title="Menos">−</BotIcone>
                 <div style={{ textAlign: "center", minWidth: 110 }}>
-                  <div style={{ color: C.text, fontWeight: 900, fontSize: 22 }}>🪙 {qtdOk}<span style={{ color: C.mute, fontWeight: 400, fontSize: 14 }}>/10</span></div>
-                  <div style={{ color: C.mute, fontSize: 10.5 }}>tokens (máx {maxTok} agora)</div>
+                  <div style={{ color: C.text, fontWeight: 900, fontSize: 22 }}>📄 {qtdOk}<span style={{ color: C.mute, fontWeight: 400, fontSize: 14 }}>/10</span></div>
+                  <div style={{ color: C.mute, fontSize: 10.5 }}>cotas (máx {maxTok} agora)</div>
                 </div>
                 <BotIcone onClick={() => setQtd(Math.min(maxTok, qtdOk + 1))} title="Mais">+</BotIcone>
               </div>
@@ -1308,7 +1308,7 @@ export default function App() {
                 width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer",
                 background: C.green, color: "#04170B", fontWeight: 900, fontSize: 15,
               }}>
-                VENDER {qtdOk} TOKEN{qtdOk > 1 ? "S" : ""} → +{fmt(saldoCarteira * (qtdOk / 10) * (1 - descTok(qtdOk)))}
+                VENDER {qtdOk} COTA{qtdOk > 1 ? "S" : ""} → +{fmt(saldoCarteira * (qtdOk / 10) * (1 - descTok(qtdOk)))}
               </button>
               <div style={{ textAlign: "center", color: C.mute, fontSize: 11, marginTop: 5 }}>
                 desconto {pctm(descTok(qtdOk))}% · lote maior = desconto maior
@@ -1325,7 +1325,7 @@ export default function App() {
       )}
 
       {/* trava de segurança: 1º clique só abre a pergunta — o encerrar de verdade fica atrás da confirmação
-          (ele fica logo abaixo do VENDER TOKENS e já engoliu partida por clique acidental) */}
+          (ele fica logo abaixo do VENDER COTAS e já engoliu partida por clique acidental) */}
       {g.mes > 1 && (confEnc ? (
         <div style={{ marginTop: 28, textAlign: "center", padding: "12px", border: `1px solid ${C.line}`, borderRadius: 12 }}>
           <div style={{ color: C.text, fontSize: 13.5, fontWeight: 800, marginBottom: 10 }}>🏁 Encerrar a partida agora?</div>
@@ -1415,9 +1415,9 @@ const DICAS = [
     mais: "O banco grande leva semanas de comitê; quem tem pressa (fornecedor cobrando amanhã, oportunidade relâmpago) paga mais caro pra quem libera em minutos. Com a chave LIGADA, a aceitação da taxa 🤑 sobe de 65% pra 85% (e de 30% pra 50% no pechincheiro). O preço: R$ 3 mil SAEM do seu caixa todo mês em que a chave estiver ligada — é a equipe extra e o sistema que analisam rápido, pagos mesmo se ninguém pegar empréstimo no mês. Não é ganho garantido: é custo fixo comprando aceitação. Curiosidade de bastidor: essa chave já custou R$ 6 mil — 140 mil partidas simuladas mostraram que a esse preço ela DESTRUÍA valor (o benefício médio é ~R$ 4 mil/mês), então foi reprecificada. Velocidade é produto, mas produto tem preço certo." },
   { e: "⭐", t: "As estrelas (score)", d: "Mais estrelas = paga certinho.",
     mais: "Chance de calote POR MÊS no mercado normal: ⭐ 12,6% · ⭐⭐ 7,7% · ⭐⭐⭐ 4,5% · ⭐⭐⭐⭐ 2,5% · ⭐⭐⭐⭐⭐ 1,3%. Por isso as taxas que eles aceitam são diferentes (5,2% → 2,3% ao mês): o banco cobra dos arriscados o prejuízo que eles causam. Na vida real esse score vem do Serasa/histórico — e funciona igualzinho." },
-  { e: "🪙", t: "Tokenização (RWA)", d: "Sua carteira vira 10 tokens. Venda = dinheiro na hora, risco vai junto.",
-    mais: "O comprador é esperto: o desconto (DESÁGIO) que ele exige = 3% de margem + a perda esperada por calote da SUA carteira + o humor do mercado + o tamanho do lote. E repara no cofre na hora de vender: se o preço da venda for MAIOR que o principal emprestado, o cofre SOBE (você antecipou o lucro dos juros) — se for menor, o cofre DESCE (vendeu no prejuízo). Vender carteira na hora certa é lucro; vender no desespero é sangria. RWA de verdade funciona assim." },
-  { e: "🛒", t: "O humor do comprador", d: "🔥 lote até 10 · 😐 até 6 · 🥶 até 3 tokens.",
+  { e: "📄", t: "Securitização (cessão de carteira)", d: "Sua carteira vira 10 cotas. Venda = dinheiro na hora, risco vai junto.",
+    mais: "O comprador é esperto: o desconto (DESÁGIO) que ele exige = 3% de margem + a perda esperada por calote da SUA carteira + o humor do mercado + o tamanho do lote. E repara no cofre na hora de vender: se o preço da venda for MAIOR que o principal emprestado, o cofre SOBE (você antecipou o lucro dos juros) — se for menor, o cofre DESCE (vendeu no prejuízo). Vender carteira na hora certa é lucro; vender no desespero é sangria. É assim que funciona securitização de verdade — e quando ela acontece numa blockchain, o mercado chama de tokenização (RWA); a mecânica é a mesma." },
+  { e: "🛒", t: "O humor do comprador", d: "🔥 lote até 10 · 😐 até 6 · 🥶 até 3 cotas.",
     mais: "🔥 comprador animado ainda dá 3% de desconto A MENOS · 🥶 sumido cobra 7% a mais. Regra de ouro: venda no 🔥, segure no 🥶. Máximo 1 venda por mês — na vida real também não se liquida carteira todo dia." },
   { e: "🧾", t: "Garantia (trava de recebíveis)", d: "Cliente com 🧾 tem dinheiro travado: calote despenca, juro também.",
     mais: "A parcela sai do fluxo dele ANTES do dinheiro chegar na mão: os recebíveis da empresa (vendas já feitas que ainda vão cair). Na vida real o mesmo esquema vale pra maquininha de cartão e pro consignado do aposentado. Calote cai pra menos da metade — mas ele só aceita juro menor, porque com garantia consegue crédito barato em qualquer banco. A troca real do mercado: margem gorda arriscada × margem magra tranquila." },

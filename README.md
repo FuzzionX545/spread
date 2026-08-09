@@ -1,6 +1,6 @@
 # SPREAD_ 💸
 
-**Simulador do mercado de crédito** — sobreviva 12 meses no comando do seu próprio banco.
+**Simulador do mercado de crédito** — sobreviva 12 meses no comando da sua própria financeira de crédito.
 
 🎮 **[Jogue agora no navegador → fuzzionx.com/spread](https://fuzzionx.com/spread)** · grátis, sem cadastro, direto no navegador
 

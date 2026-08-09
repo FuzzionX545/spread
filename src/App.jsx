@@ -437,7 +437,7 @@ const INICIO = (modo = null, clima = "normal") => {
   anim: "",
   fila: [], filaIdx: 0,
   onda: 0, stress: 0,
-  selic: 0.1425,            // Selic real de julho/2026
+  selic: 0.14,              // Selic real de agosto/2026 (Copom cortou 0,25pp em 05/08)
   totalEmprestado: 0, perdas: 0, gastoAcum: 0,
   processos: [],              // cobranças na justiça esperando sentença (paga ~2 meses depois)
   fim: null,
@@ -1428,7 +1428,7 @@ const DICAS = [
   { e: "🤝", t: "Calote tem conversa", d: "Acordo = 35% na hora. Justiça = 65% ou nada, ~2 meses depois.",
     mais: "O acordo cai na hora e é o único que pode te SALVAR de uma quebra no susto. A justiça: Serasa suja o nome imediatamente, mas o dinheiro (45% de chance de receber 65%) só sai ~2 meses depois — e se o devedor não tiver bens no nome, você ganha o processo e leva R$ 0. Números reais do Brasil: cobrança de dívida sem garantia recupera 25-35% em média, e processo de verdade leva 1-3 anos (o jogo comprime o tempo)." },
   { e: "💹", t: "Caixa parado rende", d: "Meio CDI por mês. Mas parado você DEFINHA.",
-    mais: "Com a Selic a 14,25% ao ano, seu caixa rende ~0,6% ao mês (metade do CDI — a outra metade paga a administração). Só que os investidores custam ~1,4% ao mês SEMPRE. 0,6 entrando, 1,4 saindo + custo de operação: quem não empresta, morre devagar. Banco parado não existe." },
+    mais: "Com a Selic a 14% ao ano, seu caixa rende ~0,58% ao mês (metade do CDI — a outra metade paga a administração). Só que os investidores custam ~1,4% ao mês SEMPRE. 0,6 entrando, 1,4 saindo + custo de operação: quem não empresta, morre devagar. Banco parado não existe." },
   { e: "🏢", t: "Custo de operação", d: "R$ 9.000 todo mês — equipe, sistema e cobrança.",
     mais: "Operar R$ 1 milhão exige analista, sistema de cobrança e contabilidade — R$ 108 mil por ano SAINDO, chova ou faça sol. É por isso que fintech pequena não sobrevive parada: o custo fixo come. E é por isso que crédito é jogo de escala." },
   { e: "🏃", t: "Saque do investidor", d: "Ele pode pedir resgate do nada. Tenha caixa.",

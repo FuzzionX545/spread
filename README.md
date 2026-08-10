@@ -6,7 +6,7 @@
 
 ![status](https://img.shields.io/badge/status-no%20ar-4ADE80) ![stack](https://img.shields.io/badge/stack-React%20%2B%20AWS-0A0F0D)
 
-![SPREAD_ — simulador do mercado de crédito](capa.png)
+![SPREAD_ — simulador do mercado de crédito](capa-v2.jpg)
 
 ---
 
@@ -21,8 +21,9 @@ Cada mecânica do jogo corresponde a um conceito real do mercado financeiro bras
 1. **Empresas chegam** pedindo de R$ 40 a 160 mil — com faturamento, histórico de crédito, tempo de porta aberta, score em estrelas e, às vezes, recebíveis em garantia 🧾
 2. **Você define a taxa**: 😇 baixa (todo mundo aceita), 🙂 justa ou 🤑 alta (mais lucro, mas o cliente pode recusar — e parcela pesada aumenta o risco de calote)
 3. **Roda o mês**: parcelas entram, calotes explodem 💥 (e você decide: acordo à vista ou Serasa + justiça), investidores cobram seu rendimento, eventos acontecem (Selic, crises, saques)
-4. **Tokenize a carteira** 🪙: suas dívidas viram 10 tokens — escolha quantos vender por dinheiro imediato, com desconto
-5. **Sobreviva 12 meses** 🏆 (ou encerre antes e leve sua nota 🏁; zerou o cofre = 💀)
+4. **Securitize a carteira** 📄: suas dívidas viram 10 cotas — escolha quantas vender por dinheiro imediato, com deságio
+5. **Compre carteira dos outros** 📦 *(novo na v2)*: de vez em quando outra financeira põe um lote à venda — o motivo da venda é a única pista da qualidade real
+6. **Sobreviva 12 meses** 🏆 (ou encerre antes e leve sua nota 🏁; zerou o cofre = 💀)
 
 ## 📚 O que o jogo ensina (mecânica → conceito real)
 
@@ -32,7 +33,8 @@ Cada mecânica do jogo corresponde a um conceito real do mercado financeiro bras
 | Os R$ 800 mil que rendem contra você todo mês | **Funding** — custo de captação (CDI + spread) |
 | Juros do cliente − custo do funding − calotes | **Spread** — de onde vem o lucro de quem opera crédito (daí o nome do jogo) |
 | Vender a carteira com desconto | **Cessão de crédito com deságio** |
-| Carteira fatiada em 10 tokens | **Tokenização / RWA** — fracionar recebíveis para ampliar a base de compradores |
+| Carteira fatiada em 10 cotas | **Securitização** — fracionar a cessão pra ampliar a base de compradores (on-chain, o mercado chama isso de tokenização/RWA) |
+| Comprar lote de outra financeira sem ver a carteira por dentro | **Seleção adversa** do lado do comprador — quem vende sabe mais que você (é a profissão dos FIDCs e factorings) |
 | Lote maior = desconto maior; mercado 🥶 limita a venda | **Liquidez** — o preço de sair de uma posição depende do apetite do comprador |
 | Taxa alta → mais calote | **Seleção adversa** — parcela que sufoca o cliente aumenta a inadimplência |
 | Acordo (35% na hora) × justiça (65% ou nada, meses depois) | **Recuperação de crédito** — renegociação, Serasa e execução |
@@ -42,7 +44,7 @@ Cada mecânica do jogo corresponde a um conceito real do mercado financeiro bras
 
 ## ⚖️ Balanceamento por simulação
 
-Os parâmetros do jogo não foram chutados: foram calibrados rodando **milhares de partidas simuladas** com estratégias diferentes (conservadora, gananciosa, giradora). Resultado (5.000 partidas por estratégia): aprovar tudo no piloto automático quebra em até 69% das vezes; jogando bem, a sobrevivência vai de ~92% no mercado calmo a ~69% no brabo. A Selic inicial é a real (14,25%) e o investidor recebe CDI + 3,6% a.a. — faixa verdadeira de cota sênior de FIDC. Estratégia importa.
+Os parâmetros do jogo não foram chutados: foram calibrados rodando **milhares de partidas simuladas** com estratégias diferentes (conservadora, gananciosa, giradora). Resultado (5.000 partidas por estratégia): aprovar tudo no piloto automático quebra em até 69% das vezes; jogando bem, a sobrevivência vai de ~92% no mercado calmo a ~69% no brabo. A Selic inicial é a real (14% — Copom de 05/08/2026) e o investidor recebe CDI + 5% a.a. — teto da faixa verdadeira de cota sênior de FIDC. Estratégia importa.
 
 Curiosidade: o risco de calote do jogo é propositalmente **maior** que o real (a inadimplência brasileira ronda 4% *ao ano*; no jogo, clientes arriscados passam disso *por mês*). Na vida real, o spread é desenhado para o banco quase nunca perder — mas jogo sem risco de perder não diverte ninguém. 😄
 
@@ -63,11 +65,19 @@ npm run dev
 
 O jogo abre no navegador (endereço local exibido no terminal). Para gerar a versão de produção: `npm run build`.
 
+## 🧾 Versões
+
+| versão | data | o que mudou |
+|---|---|---|
+| **v2** | 10/08/2026 | **comprar carteira de outras financeiras** (seleção adversa pelo motivo da venda) · conselheiro destrava com 5 cliques |
+| v1.1 | 09/08/2026 | "banco" → **financeira** · "tokens" → **cotas/securitização** · funding sobe pra **CDI+5%** · Selic 14% · Ajuda enxuta + proteção do investidor · licença MIT |
+| v1 | ago/2026 | lançamento — 12 meses, score, garantia, venda de carteira, acordo × justiça, calibrado com meio milhão de partidas |
+
 ## 🗺️ Roadmap
 
 - [ ] Ranking de notas compartilhável
 - [ ] Modo infinito para quem zerar
-- [ ] Novas mecânicas e eventos de mercado
+- [x] ~~Novas mecânicas e eventos de mercado~~ → v2: compra de carteira
 
 ## ⚠️ Aviso
 

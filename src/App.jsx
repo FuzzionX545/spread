@@ -431,6 +431,8 @@ const INICIO = (modo = null, clima = "normal") => {
   pedidos: novosPedidos(1),
   idx: 0,
   vendeuMes: false,
+  comprouMes: false,
+  oferta: novaOferta(),           // v2: lote de carteira alheia no balcão
   turbo: false,               // ⚡ Liberação na Hora desligada por padrão
   mercado: sorteiaMercado(),
   fala: modo === "mkt" ? "Origina e repassa — lucro no giro! 🔁" : "Bora emprestar dinheiro! 🚀",
@@ -443,6 +445,27 @@ const INICIO = (modo = null, clima = "normal") => {
   fim: null,
   };
 };
+
+// ===== v2 — LOTE À VENDA: outra financeira oferece um pedaço da carteira dela.
+// Quem vende sabe mais que você (seleção adversa): o MOTIVO da venda é a pista
+// da qualidade real. Deságio maior demais é isca, não presente.
+const MOTIVOS_LOTE = [
+  { rot: "precisa de caixa pra crescer", podre: 0.12 },
+  { rot: "sócio saiu, estão partilhando o negócio", podre: 0.25 },
+  { rot: "vai focar em outro segmento", podre: 0.35 },
+  { rot: "\"reestruturação do portfólio\"", podre: 0.65 },
+  { rot: "auditoria interna em andamento", podre: 0.8 },
+];
+function novaOferta() {
+  if (Math.random() < 0.45) return null; // nem todo mês tem lote no balcão
+  const score = 2 + Math.floor(Math.random() * 3); // ★★ a ★★★★ anunciado
+  const n = 3 + Math.floor(Math.random() * 3); // 3 a 5 contratos
+  const face = n * (30 + Math.floor(Math.random() * 40)) * 1000;
+  const motivo = MOTIVOS_LOTE[Math.floor(Math.random() * MOTIVOS_LOTE.length)];
+  const podre = Math.random() < motivo.podre; // pior do que anuncia — e você não vê
+  const desc = 0.08 + Math.random() * 0.08 + (podre ? 0.03 : 0); // o podre "parece" mais barato
+  return { score, n, face, desc, motivo: motivo.rot, podre, preco: Math.round(face * (1 - desc)) };
+}
 
 const devido = (l) => l.parcela * l.restantes;
 const meu = (l) => devido(l) * (1 - (l.vendido || 0));
@@ -663,6 +686,34 @@ export default function App() {
     });
   }
 
+  // v2: compra o lote anunciado — os contratos entram na carteira como os seus
+  function comprarLote() {
+    SFX.moedaMario();
+    setG((s) => {
+      const o = s.oferta;
+      if (!o || s.comprouMes || s.caixa < o.preco) return s;
+      const novos = Array.from({ length: o.n }, () => {
+        const restantes = 4 + Math.floor(Math.random() * 5); // 4 a 8 meses restantes
+        const parcela = o.face / o.n / restantes;
+        return {
+          id: SEQ++, emoji: "📦", nome: sorteia(NOMES), quer: "lote comprado",
+          renda: 0, rotRenda: "", hist: null, tempoNeg: 0, compr: 0, humor: "deboa",
+          score: o.score, taxa: TAXA[o.score], gar: null,
+          prazo: restantes, restantes, parcela,
+          valor: Math.round((o.face / o.n) / (1 + TAXA[o.score] * restantes)),
+          comprado: true, podre: o.podre,
+        };
+      });
+      return {
+        ...s,
+        caixa: s.caixa - o.preco,
+        carteira: [...s.carteira, ...novos],
+        comprouMes: true,
+        fala: `📦 Lote comprado! ${o.n} contratos entraram na carteira. Agora o risco é seu.`,
+      };
+    });
+  }
+
   function encerrar() {
     musica(false);
     SFX.meh();
@@ -790,7 +841,8 @@ export default function App() {
       for (const l of carteira) {
         const perfil = (l.compr > 0.4 ? 1.25 : 1) * (l.hist ? l.hist.mult : 1) * (l.tempoNeg && l.tempoNeg < 12 ? 1.2 : 1);
         const rEf = RISCO[l.score] * MM.risco * mult * (l.gar ? 0.4 : 1) * perfil *
-          (l.taxa > TAXA[l.score] + 0.005 ? 1.35 : l.taxa < TAXA[l.score] - 0.004 ? 0.85 : 1);
+          (l.taxa > TAXA[l.score] + 0.005 ? 1.35 : l.taxa < TAXA[l.score] - 0.004 ? 0.85 : 1) *
+          (l.podre ? 1.7 : 1); // v2: carteira comprada de vendedor desonesto caloteia 70% acima do anunciado
         if (Math.random() < rEf) {
           const perda = principal(l); // você perde o que emprestou e não voltou (juros futuros eram só promessa)
           perdas += perda;
@@ -867,7 +919,7 @@ export default function App() {
         gastoAcum: s.gastoAcum + custo + OPEX + turboCusto,
         carteira: sobrev, mes: Math.min(mes, MESES + 1),
         pedidos: novosPedidos(mes), idx: 0,
-        vendeuMes: false, mercado: sorteiaMercado(),
+        vendeuMes: false, comprouMes: false, oferta: novaOferta(), mercado: sorteiaMercado(),
         tela: "resolvendo", fila, filaIdx: 0,
         fala: "Vamos ver como foi o mês… 🤞",
       };
@@ -972,6 +1024,8 @@ export default function App() {
           {ajuda && <Ajuda onClose={() => setAjuda(false)} />}
           <p style={{ color: "#4A5C52", fontSize: 10.5, marginTop: 34, letterSpacing: 0.5 }}>
             <a href="https://fuzzionx.com" target="_blank" rel="noopener noreferrer" style={{ color: "#5d6a61", textDecoration: "none", fontWeight: 700 }}>FUZZIONX</a>
+            <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
+            <span>v2</span>
             <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
             <a href="https://github.com/FuzzionX545/spread" target="_blank" rel="noopener noreferrer" style={{ color: "#5d6a61", textDecoration: "none" }}>GitHub ↗</a>
           </p>
@@ -1317,6 +1371,41 @@ export default function App() {
           )}
         </div>
       )}
+      {/* v2: balcão de compra — aparece quando alguma financeira põe lote à venda */}
+      {g.modo === "fundo" && g.oferta && (
+        <div style={{ ...painel, marginTop: 12, padding: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ color: C.mute, fontSize: 12, fontWeight: 700 }}>📦 LOTE À VENDA · outra financeira</span>
+            <span style={{ fontSize: 11, color: C.mute }}>deságio {pctm(g.oferta.desc)}%</span>
+          </div>
+          {g.comprouMes ? (
+            <div style={{ textAlign: "center", color: C.mute, fontSize: 12.5, padding: "6px 0" }}>
+              📦 Lote comprado — os contratos já estão na sua carteira.
+            </div>
+          ) : (
+            <div>
+              <div style={{ color: C.text, fontSize: 13, marginBottom: 4 }}>
+                {"★".repeat(g.oferta.score)} anunciado · {g.oferta.n} contratos · face {fmt(g.oferta.face)}
+              </div>
+              <div style={{ color: C.mute, fontSize: 12, fontStyle: "italic", marginBottom: 8 }}>
+                motivo da venda: {g.oferta.motivo}
+              </div>
+              <button onClick={comprarLote} disabled={g.caixa < g.oferta.preco} style={{
+                width: "100%", padding: "11px", borderRadius: 12, border: "none",
+                cursor: g.caixa < g.oferta.preco ? "default" : "pointer",
+                background: g.caixa < g.oferta.preco ? "#1d2733" : C.blue, color: "#041220",
+                fontWeight: 900, fontSize: 14, opacity: g.caixa < g.oferta.preco ? 0.5 : 1,
+              }}>
+                COMPRAR POR {fmt(g.oferta.preco)}
+              </button>
+              <div style={{ textAlign: "center", color: C.mute, fontSize: 10.5, marginTop: 5 }}>
+                quem vende sabe mais que você — o motivo é a pista
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {g.modo === "mkt" && saldoCarteira > 0 && (
         <div style={{ ...painel, marginTop: 12, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: C.mute, fontSize: 12, fontWeight: 700 }}>🔁 PRA REPASSAR NO FIM DO MÊS</span>
@@ -1421,6 +1510,8 @@ const DICAS = [
     mais: "O desconto (DESÁGIO) do comprador = 3% de margem dele + a perda esperada por calote da SUA carteira + o humor do mercado + o tamanho do lote. Venda maior que o principal emprestado: cofre SOBE (antecipou o lucro dos juros). Menor: DESCE. Na hora certa é lucro; no desespero é sangria. Na blockchain esse mesmo movimento se chama tokenização (RWA)." },
   { e: "🛒", t: "O humor do comprador", d: "🔥 lote até 10 · 😐 até 6 · 🥶 até 3 cotas.",
     mais: "🔥 comprador animado ainda dá 3% de desconto A MENOS · 🥶 sumido cobra 7% a mais. Regra de ouro: venda no 🔥, segure no 🥶. Máximo 1 venda por mês — na vida real também não se liquida carteira todo dia." },
+  { e: "📦", t: "Comprar carteira (novo na v2)", d: "Lotes de outras financeiras no balcão. O motivo da venda é a pista.",
+    mais: "Agora o balcão funciona nos dois sentidos: dá pra COMPRAR lote de contratos de outra financeira, com deságio. O porém: quem vende sabe mais que você (seleção adversa). Vendedor que precisa de caixa pra crescer costuma entregar lote honesto; \"reestruturação do portfólio\" e auditoria em andamento cheiram a carteira podre — que calotéia até 70% acima do anunciado, e o deságio gordo é isca. Na vida real, avaliar carteira alheia é a profissão inteira de FIDCs e factorings." },
   { e: "🧾", t: "Garantia (trava de recebíveis)", d: "Cliente com 🧾 tem dinheiro travado: calote despenca, juro também.",
     mais: "A parcela sai do fluxo dele ANTES do dinheiro chegar na mão: os recebíveis da empresa (vendas já feitas que ainda vão cair). Na vida real o mesmo esquema vale pra maquininha de cartão e pro consignado do aposentado. Calote cai pra menos da metade — mas ele só aceita juro menor, porque com garantia consegue crédito barato em qualquer banco. A troca real do mercado: margem gorda arriscada × margem magra tranquila." },
   { e: "💼", t: "O perfil do cliente", d: "Renda, histórico e idade do negócio mudam o risco DE VERDADE.",

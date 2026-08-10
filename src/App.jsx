@@ -1375,20 +1375,20 @@ export default function App() {
       {g.modo === "fundo" && g.oferta && (
         <div style={{ ...painel, marginTop: 12, padding: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ color: C.mute, fontSize: 12, fontWeight: 700 }}>📦 LOTE À VENDA · outra financeira</span>
+            <span style={{ color: C.mute, fontSize: 12, fontWeight: 700 }}>📦 LOTE À VENDA</span>
             <span style={{ fontSize: 11, color: C.mute }}>deságio {pctm(g.oferta.desc)}%</span>
           </div>
           {g.comprouMes ? (
             <div style={{ textAlign: "center", color: C.mute, fontSize: 12.5, padding: "6px 0" }}>
-              📦 Lote comprado — os contratos já estão na sua carteira.
+              📦 Comprado — já está na sua carteira.
             </div>
           ) : (
             <div>
               <div style={{ color: C.text, fontSize: 13, marginBottom: 4 }}>
-                {"★".repeat(g.oferta.score)} anunciado · {g.oferta.n} contratos · face {fmt(g.oferta.face)}
+                {g.oferta.n} contratos · score médio {"★".repeat(g.oferta.score)} · face {fmt(g.oferta.face)}
               </div>
               <div style={{ color: C.mute, fontSize: 12, fontStyle: "italic", marginBottom: 8 }}>
-                motivo da venda: {g.oferta.motivo}
+                “{g.oferta.motivo}”
               </div>
               <button onClick={comprarLote} disabled={g.caixa < g.oferta.preco} style={{
                 width: "100%", padding: "11px", borderRadius: 12, border: "none",
@@ -1398,9 +1398,6 @@ export default function App() {
               }}>
                 COMPRAR POR {fmt(g.oferta.preco)}
               </button>
-              <div style={{ textAlign: "center", color: C.mute, fontSize: 10.5, marginTop: 5 }}>
-                quem vende sabe mais que você — o motivo é a pista
-              </div>
             </div>
           )}
         </div>

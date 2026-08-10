@@ -6,7 +6,7 @@
 
 ![status](https://img.shields.io/badge/status-no%20ar-4ADE80) ![stack](https://img.shields.io/badge/stack-React%20%2B%20AWS-0A0F0D)
 
-![SPREAD_ — simulador do mercado de crédito](capa-v2.jpg)
+![SPREAD_ — simulador do mercado de crédito](capa.png)
 
 ---
 

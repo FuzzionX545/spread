@@ -38,7 +38,7 @@ const TAXA  = { 1: 0.052, 2: 0.043, 3: 0.036, 4: 0.029, 5: 0.023 };
 // fundo único de R$ 1 milhão — crédito PME de verdade
 const OPEX = 9000;          // equipe, sistema e cobrança por mês
 const TURBO_CUSTO = 3000;   // ⚡ Liberação na Hora — reprecificada em 05/08 após 140 mil partidas simuladas: benefício médio ~4k/mês; a 6k destruía valor, a 3k é trade-off real (+lucro, -sobrevivência)
-const FUNDING = 0.003;      // investidor recebe CDI + 3,6% a.a. (faixa real de cota sênior)
+const FUNDING = 0.05 / 12;  // investidor recebe CDI + 5% a.a. (teto da faixa real de cota sênior)
 // MERCADO = em que ano do Brasil você está jogando (muda calote e frequência de crise)
 const MERCADOS = {
   calmo:  { nome: "calmo",  icone: "🕊️", risco: 0.7,  crise: 0.08, notaBase: 50, notaMult: 40 },
@@ -695,9 +695,9 @@ export default function App() {
       return;
     }
     const agora = Date.now();
-    // precisa insistir DE VERDADE: 15 cliques rápidos numa janela de 6 segundos
-    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 6000), agora];
-    if (cliquesRobo.current.length >= 15) {
+    // insistiu um pouquinho: 5 cliques rápidos numa janela de 2,5 segundos
+    cliquesRobo.current = [...cliquesRobo.current.filter((t) => agora - t < 2500), agora];
+    if (cliquesRobo.current.length >= 5) {
       // CURTO-CIRCUITO — treme, fala errado… e o curto pode destravar o modo conselheiro (1x por mês)
       cliquesRobo.current = [];
       setRoboChoque(true);
@@ -1406,7 +1406,7 @@ const DICAS = [
   { e: "🎯", t: "O objetivo", d: "Sobreviva 12 meses. Cofre zerou = quebrou.",
     mais: "Seu cofre é a COTA SUBORDINADA: os SEUS R$ 200 mil dentro do fundo de R$ 1 milhão. Todo calote sai primeiro dele — o investidor só perde se o seu zerar. É assim que fundos de crédito reais (FIDCs) funcionam: existe uma fila pra perder dinheiro, e o dono da fintech é o primeiro da fila. Fórmula do cofre: caixa + o que está emprestado − dívida com os investidores." },
   { e: "💰", t: "De onde vem o dinheiro", d: "80% dos investidores + 20% seu.",
-    mais: "Os investidores colocam 80% do fundo e recebem CDI + 3,6% ao ano (na vida real hoje: cota sênior de FIDC paga CDI+2 a 5%). Quem paga esse rendimento é VOCÊ, com os juros dos clientes. Se o cliente te paga 3,6% ao mês e o investidor custa ~1,4%, a diferença — o SPREAD — é seu lucro. Daí o nome do jogo." },
+    mais: "Os investidores colocam 80% do fundo e recebem CDI + 5% ao ano (na vida real: cota sênior de FIDC paga CDI+2 a 5%). Quem paga esse rendimento é VOCÊ, com os juros dos clientes. Se o cliente te paga 3,6% ao mês e o investidor custa ~1,6%, a diferença — o SPREAD — é seu lucro. Daí o nome do jogo." },
   { e: "💬", t: "Você define a taxa", d: "😇 aceita fácil · 🙂 justa · 🤑 pode recusar.",
     mais: "Cliente 🤨 pechincheiro recusa a taxa alta 70% das vezes (e até a justa, 30%). E tem o efeito escondido: taxa alta = parcela pesada = +35% de risco de calote, porque aperta o orçamento do cliente. É real: juro abusivo aumenta a inadimplência que ele tenta cobrir." },
   { e: "🏦", t: "Por que eles vêm até VOCÊ?", d: "Todo cliente aqui foi recusado (ou não esperado) pelo banco grande.",
@@ -1428,7 +1428,7 @@ const DICAS = [
   { e: "🤝", t: "Calote tem conversa", d: "Acordo = 35% na hora. Justiça = 65% ou nada, ~2 meses depois.",
     mais: "O acordo cai na hora e é o único que pode te SALVAR de uma quebra no susto. A justiça: Serasa suja o nome imediatamente, mas o dinheiro (45% de chance de receber 65%) só sai ~2 meses depois — e se o devedor não tiver bens no nome, você ganha o processo e leva R$ 0. Números reais do Brasil: cobrança de dívida sem garantia recupera 25-35% em média, e processo de verdade leva 1-3 anos (o jogo comprime o tempo)." },
   { e: "💹", t: "Caixa parado rende", d: "Meio CDI por mês. Mas parado você DEFINHA.",
-    mais: "Com a Selic a 14% ao ano, seu caixa rende ~0,58% ao mês (metade do CDI — a outra metade paga a administração). Só que os investidores custam ~1,4% ao mês SEMPRE. 0,6 entrando, 1,4 saindo + custo de operação: quem não empresta, morre devagar. Banco parado não existe." },
+    mais: "Com a Selic a 14% ao ano, seu caixa rende ~0,58% ao mês (metade do CDI — a outra metade paga a administração). Só que os investidores custam ~1,6% ao mês SEMPRE. 0,6 entrando, 1,6 saindo + custo de operação: quem não empresta, morre devagar. Banco parado não existe." },
   { e: "🏢", t: "Custo de operação", d: "R$ 9.000 todo mês — equipe, sistema e cobrança.",
     mais: "Operar R$ 1 milhão exige analista, sistema de cobrança e contabilidade — R$ 108 mil por ano SAINDO, chova ou faça sol. É por isso que fintech pequena não sobrevive parada: o custo fixo come. E é por isso que crédito é jogo de escala." },
   { e: "🏃", t: "Saque do investidor", d: "Ele pode pedir resgate do nada. Tenha caixa.",

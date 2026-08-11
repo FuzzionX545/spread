@@ -436,7 +436,7 @@ const INICIO = (modo = null, clima = "normal") => {
   idx: 0,
   vendeuMes: false,
   comprouMes: false,
-  oferta: novaOferta(),           // lote de carteira alheia batendo na porta
+  oferta: null,                   // mês 1 SEM lote: o jogador conhece a mesa primeiro (achado dele, 11/08)
   turbo: false,               // ⚡ Liberação na Hora desligada por padrão
   mercado: sorteiaMercado(),
   fala: modo === "mkt" ? "Origina e repassa — lucro no giro! 🔁" : "Bora emprestar dinheiro! 🚀",

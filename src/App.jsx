@@ -898,8 +898,10 @@ export default function App() {
       onda = Math.max(0, onda - 1);
       stress = Math.max(0, stress - 1);
       const r = Math.random();
-      if (r < 0.12) { selic = Math.min(0.19, selic + 0.01); fila.push({ emoji: "📈", titulo: "Selic subiu!", sub: `${pctm(selic)}% a.a. — seu custo subiu`, delta: 0, cor: C.amber }); }
-      else if (r < 0.20) { selic = Math.max(0.09, selic - 0.01); fila.push({ emoji: "📉", titulo: "Selic caiu", sub: `${pctm(selic)}% a.a. — custo aliviou`, delta: 0, cor: C.green }); }
+      // Selic só muda em REUNIÃO DO COPOM (meses pares — na vida real são 8 reuniões/ano, a cada ~45 dias)
+      const copom = s.mes % 2 === 0;
+      if (copom && r < 0.24) { selic = Math.min(0.19, selic + 0.01); fila.push({ emoji: "📈", titulo: "Copom subiu a Selic!", sub: `reunião do mês: ${pctm(selic)}% a.a. — seu custo subiu`, delta: 0, cor: C.amber }); }
+      else if (copom && r < 0.40) { selic = Math.max(0.09, selic - 0.01); fila.push({ emoji: "📉", titulo: "Copom cortou a Selic", sub: `reunião do mês: ${pctm(selic)}% a.a. — custo aliviou`, delta: 0, cor: C.green }); }
       else if (r < 0.2 + MM.crise) {
         if (s.modo === "mkt") { stress = 2; fila.push({ emoji: "🥶", titulo: "Compradores sumiram!", sub: "descontos maiores por 2 meses", delta: 0, cor: C.red, shake: true }); }
         else { onda = 2; fila.push({ emoji: "🌪️", titulo: "Crise chegando!", sub: "risco de calote 2x por 2 meses", delta: 0, cor: C.red, shake: true }); }

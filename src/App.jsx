@@ -163,6 +163,10 @@ function glitchRobo(a, t, f0, passos = 5, vol = 0.08) {
 
 const SFX = {
   clique: () => tom(520, 0.06, "square", 0.07),
+  lote: () => { // batida grave dupla: alguém bateu na porta do fundo
+    tom(110, 0.22, "sine", 0.16); tom(82, 0.35, "sine", 0.14, 0.18);
+    tom(220, 0.1, "triangle", 0.05, 0.02);
+  },
   partida: () => { // apito de largada: três toques subindo + o "VALENDO!"
     [523, 659, 784].forEach((f, i) => tom(f, 0.09, "square", 0.1, i * 0.12));
     tom(1047, 0.55, "triangle", 0.13, 0.42);
@@ -432,7 +436,7 @@ const INICIO = (modo = null, clima = "normal") => {
   idx: 0,
   vendeuMes: false,
   comprouMes: false,
-  oferta: novaOferta(),           // v2: lote de carteira alheia no balcão
+  oferta: novaOferta(),           // lote de carteira alheia batendo na porta
   turbo: false,               // ⚡ Liberação na Hora desligada por padrão
   mercado: sorteiaMercado(),
   fala: modo === "mkt" ? "Origina e repassa — lucro no giro! 🔁" : "Bora emprestar dinheiro! 🚀",
@@ -510,6 +514,12 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [g.tela]);
   const [vendaFx, setVendaFx] = useState(0); // moedas voando quando vende tokens
+
+  // v3: a batida grave na porta quando o card do lote trava a tela
+  useEffect(() => {
+    if (g.tela === "jogo" && g.modo === "fundo" && g.oferta && !g.comprouMes) SFX.lote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.mes, g.tela]);
 
   function reiniciar(modo = null) {
     setQtd(3); // seletor de tokens volta ao padrão a cada partida
@@ -709,9 +719,15 @@ export default function App() {
         caixa: s.caixa - o.preco,
         carteira: [...s.carteira, ...novos],
         comprouMes: true,
+        oferta: null,
         fala: `📦 Lote comprado! ${o.n} contratos entraram na carteira. Agora o risco é seu.`,
       };
     });
+  }
+
+  function recusarLote() {
+    SFX.recusa();
+    setG((s) => ({ ...s, oferta: null, fala: "Recusou o lote. O risco ficou com quem vendia. 🤝" }));
   }
 
   function encerrar() {
@@ -1371,35 +1387,46 @@ export default function App() {
           )}
         </div>
       )}
-      {/* v2: balcão de compra — aparece quando alguma financeira põe lote à venda */}
-      {g.modo === "fundo" && g.oferta && (
-        <div style={{ ...painel, marginTop: 12, padding: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ color: C.mute, fontSize: 12, fontWeight: 700 }}>📦 LOTE À VENDA</span>
-            <span style={{ fontSize: 11, color: C.mute }}>deságio {pctm(g.oferta.desc)}%</span>
+      {/* v3: CARD-EVENTO do lote — trava a tela no começo do mês (o "mundo invertido") */}
+      {g.modo === "fundo" && g.oferta && !g.comprouMes && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 60, display: "grid", placeItems: "center",
+          background: "rgba(3,8,6,0.82)", backdropFilter: "blur(2px)",
+        }}>
+          <div style={{
+            width: "min(420px, 92vw)", borderRadius: 22, padding: "26px 22px", textAlign: "center",
+            background: "#0a1014", border: `2px solid ${C.blue}`, boxShadow: `0 0 34px rgba(96,165,250,0.25)`,
+          }}>
+            <div style={{ fontSize: 52, lineHeight: 1 }}>📦</div>
+            <div style={{ color: C.blue, fontWeight: 900, fontSize: 22, marginTop: 10, letterSpacing: 0.5 }}>LOTE À VENDA</div>
+            <div style={{ color: C.mute, fontSize: 12.5, marginTop: 2 }}>outra financeira quer sair da posição</div>
+            <div style={{ fontSize: 24, marginTop: 12 }}>{"⭐".repeat(g.oferta.score)}</div>
+            <div style={{ color: C.mute, fontSize: 11.5 }}>score médio dos {g.oferta.n} contratos</div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14, flexWrap: "wrap" }}>
+              {[`face ${fmt(g.oferta.face)}`, `${g.oferta.n} contratos`, `deságio ${pctm(g.oferta.desc)}%`].map((c) => (
+                <span key={c} style={{
+                  padding: "6px 12px", borderRadius: 10, fontSize: 12.5, fontWeight: 700,
+                  background: "#101820", border: "1px solid #283846", color: C.text,
+                }}>{c}</span>
+              ))}
+            </div>
+            <div style={{ color: C.mute, fontSize: 12, marginTop: 18 }}>motivo da venda:</div>
+            <div style={{ color: C.text, fontSize: 17, fontStyle: "italic", marginTop: 4 }}>“{g.oferta.motivo}”</div>
+            <button onClick={comprarLote} disabled={g.caixa < g.oferta.preco} style={{
+              width: "100%", marginTop: 20, padding: "13px", borderRadius: 13, border: "none",
+              cursor: g.caixa < g.oferta.preco ? "default" : "pointer",
+              background: g.caixa < g.oferta.preco ? "#1d2733" : C.blue, color: "#041220",
+              fontWeight: 900, fontSize: 15, opacity: g.caixa < g.oferta.preco ? 0.5 : 1,
+            }}>
+              COMPRAR POR {fmt(g.oferta.preco)}
+            </button>
+            <button onClick={recusarLote} style={{
+              width: "100%", marginTop: 8, padding: "11px", borderRadius: 13, cursor: "pointer",
+              background: "none", border: "1px solid #34424e", color: C.mute, fontWeight: 800, fontSize: 13,
+            }}>
+              RECUSAR
+            </button>
           </div>
-          {g.comprouMes ? (
-            <div style={{ textAlign: "center", color: C.mute, fontSize: 12.5, padding: "6px 0" }}>
-              📦 Comprado — já está na sua carteira.
-            </div>
-          ) : (
-            <div>
-              <div style={{ color: C.text, fontSize: 13, marginBottom: 4 }}>
-                {g.oferta.n} contratos · score médio {"★".repeat(g.oferta.score)} · face {fmt(g.oferta.face)}
-              </div>
-              <div style={{ color: C.mute, fontSize: 12, fontStyle: "italic", marginBottom: 8 }}>
-                “{g.oferta.motivo}”
-              </div>
-              <button onClick={comprarLote} disabled={g.caixa < g.oferta.preco} style={{
-                width: "100%", padding: "11px", borderRadius: 12, border: "none",
-                cursor: g.caixa < g.oferta.preco ? "default" : "pointer",
-                background: g.caixa < g.oferta.preco ? "#1d2733" : C.blue, color: "#041220",
-                fontWeight: 900, fontSize: 14, opacity: g.caixa < g.oferta.preco ? 0.5 : 1,
-              }}>
-                COMPRAR POR {fmt(g.oferta.preco)}
-              </button>
-            </div>
-          )}
         </div>
       )}
 

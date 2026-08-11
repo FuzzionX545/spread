@@ -461,7 +461,7 @@ const MOTIVOS_LOTE = [
   { rot: "auditoria interna em andamento", podre: 0.8 },
 ];
 function novaOferta() {
-  if (Math.random() < 0.45) return null; // nem todo mês tem lote no balcão
+  if (Math.random() < 0.70) return null; // lote é EVENTO: ~3 por partida (ajuste dele, 11/08 — 55% travava a tela demais)
   const score = 2 + Math.floor(Math.random() * 3); // ★★ a ★★★★ anunciado
   const n = 3 + Math.floor(Math.random() * 3); // 3 a 5 contratos
   const face = n * (30 + Math.floor(Math.random() * 40)) * 1000;

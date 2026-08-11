@@ -1041,7 +1041,7 @@ export default function App() {
           <p style={{ color: "#4A5C52", fontSize: 10.5, marginTop: 34, letterSpacing: 0.5 }}>
             <a href="https://fuzzionx.com" target="_blank" rel="noopener noreferrer" style={{ color: "#5d6a61", textDecoration: "none", fontWeight: 700 }}>FUZZIONX</a>
             <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
-            <span>v2</span>
+            <span>v3</span>
             <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
             <a href="https://github.com/FuzzionX545/spread" target="_blank" rel="noopener noreferrer" style={{ color: "#5d6a61", textDecoration: "none" }}>GitHub ↗</a>
           </p>

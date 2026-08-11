@@ -69,7 +69,8 @@ O jogo abre no navegador (endereço local exibido no terminal). Para gerar a ver
 
 | versão | data | o que mudou |
 |---|---|---|
-| **v2** | 10/08/2026 | **comprar carteira de outras financeiras** (seleção adversa pelo motivo da venda) · "banco" → **financeira** · "tokens" → **cotas/securitização** · funding **CDI+5%** · Selic 14% · Ajuda enxuta + proteção do investidor · conselheiro em 5 cliques · licença MIT |
+| **v3** | 10/08/2026 | o lote vira **card-evento** que trava a tela (mundo invertido azul, som próprio, comprar/recusar) |
+| v2 | 10/08/2026 | **comprar carteira de outras financeiras** (seleção adversa pelo motivo da venda) · "banco" → **financeira** · "tokens" → **cotas/securitização** · funding **CDI+5%** · Selic 14% · Ajuda enxuta + proteção do investidor · conselheiro em 5 cliques · licença MIT |
 | v1 | ago/2026 | lançamento — 12 meses, score, garantia, venda de carteira, acordo × justiça, calibrado com meio milhão de partidas |
 
 ## 🗺️ Roadmap

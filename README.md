@@ -69,15 +69,10 @@ O jogo abre no navegador (endereço local exibido no terminal). Para gerar a ver
 
 | versão | data | o que mudou |
 |---|---|---|
-| **v3** | 10/08/2026 | o lote vira **card-evento** que trava a tela (mundo invertido azul, som próprio, comprar/recusar) |
+| **v3.1** | ago/2026 | Selic presa ao calendário do **Copom** (muda só em reunião) · lote de carteira só a partir do mês 2 e em ~30% dos meses |
+| v3 | 10/08/2026 | o lote vira **card-evento** que trava a tela (mundo invertido azul, som próprio, comprar/recusar) |
 | v2 | 10/08/2026 | **comprar carteira de outras financeiras** (seleção adversa pelo motivo da venda) · "banco" → **financeira** · "tokens" → **cotas/securitização** · funding **CDI+5%** · Selic 14% · Ajuda enxuta + proteção do investidor · conselheiro em 5 cliques · licença MIT |
 | v1 | ago/2026 | lançamento — 12 meses, score, garantia, venda de carteira, acordo × justiça, calibrado com meio milhão de partidas |
-
-## 🗺️ Roadmap
-
-- [ ] Ranking de notas compartilhável
-- [ ] Modo infinito para quem zerar
-- [x] ~~Novas mecânicas e eventos de mercado~~ → v2: compra de carteira
 
 ## ⚠️ Aviso
 
@@ -85,9 +80,11 @@ Simulação **educacional** com dinheiro fictício e números simplificados. Nã
 
 ## 👤 Autor
 
-**João Victor Silveira** — fundador da [FuzzionX](https://fuzzionx.com). Estudo o mercado financeiro e construo software de ponta a ponta (React, AWS serverless, automação com IA).
+**João Victor Silveira** — fundador da [FuzzionX](https://fuzzionx.com), tecnologia financeira para ativos digitais. O SPREAD_ nasceu de estudar crédito e securitização; a FuzzionX leva a mesma ideia — fatiar e negociar ativos — para a blockchain.
 
 - 💼 [LinkedIn](https://www.linkedin.com/in/joaovsilveira)
 - 📫 hello@fuzzionx.com
+
+🔐 Conheça também a **[Carteira FuzzionX](https://play.google.com/store/apps/details?id=com.fuzzionx.carteira)** na Google Play.
 
 *Se o jogo te ensinou algo, deixa uma ⭐ no repositório!*
